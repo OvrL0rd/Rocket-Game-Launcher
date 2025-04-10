@@ -332,3 +332,20 @@ def add_rounded_corners(image, radius):
     rounded_image = ImageOps.fit(image, mask.size, centering=(0.5, 0.5))
     rounded_image.putalpha(mask)
     return rounded_image
+
+# -------------------------------------------------------------------------------------------
+def get_cover_image(app_id):
+    # Try to grab the cover image locally
+    search_root = os.path.join(os.getenv("PROGRAMFILES(X86)"), "Steam", "appcache", "librarycache", app_id)
+
+    for root, dirs, files in os.walk(search_root, topdown=True):
+        # Limit the depth of the search to only two levels
+        dirs[:] = [d for d in dirs if os.path.join(root, d).count(os.sep) - search_root.count(os.sep) <= 1]
+
+        for file in files:
+            if file == "library_600x900.jpg":
+                print("Local Image Found!")
+                return os.path.join(root, file)
+
+    # Fallback to CDN if no local image found
+    return f"https://cdn.cloudflare.steamstatic.com/steam/apps/{app_id}/library_600x900.jpg"

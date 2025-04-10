@@ -1,4 +1,4 @@
-# ----------------------------------
+﻿# ----------------------------------
 #      File Name: Main_Window_Class.py
 #           Date: 8/28/24
 #    Description: This is the class 'Main_Window' implementation. Originally in 'driver.py'.
@@ -36,10 +36,11 @@ class Main_Window:
         self.root = root # set
         root.title("Rocket Game Launcher") # Define the Name of window
         root.geometry("1325x900") # Define the size of the window
+        root.resizable(False, False)
         
-        # Set the scrollable height of the window
-        window_height = self.root.winfo_height()
-        self.scrollable_height = int(0.75 * window_height)
+        self.scrollable_height = 0 # Set the scrollable height to 0
+        self.calculate_scrollable_height() # Calculate the scrollable height of the window
+        
 
         self.color = None # Set color(dark/light mode)
         theme = self.get_windows_theme() # Get window's current theme and set self.color to it
@@ -68,6 +69,9 @@ class Main_Window:
         self.config_path = os.path.join(self.current_dir, 'Config', 'config.ini')
         path = read_config_file(self.config_path)
         
+        # Set the state of the dialog window
+        self.dialog_open = False
+
         # Retrieve the API key from the environment variable
         load_dotenv()
         self.api_key = os.getenv('GIANT_BOMB_API_KEY') # Set the API key to a global variable
@@ -200,64 +204,81 @@ class Main_Window:
     def create_dashboard(self):
         self.Kill_All_Widgets() # Kill all widgets on the current screen
         self.create_menu_bar() # Create the top menu bar
-        # Create Steam Portion of the dashboard
+         # Create Steam Portion of the dashboard
 
-        # Create scrollable frame
+         # Create scrollable frame
         self.scrollable_frame = ctk.CTkScrollableFrame(self.root,
-                                            fg_color='transparent',
-                                            orientation="vertical"
-                                                       )
-        self.scrollable_frame.pack(fill="both",
-                                   pady=(0,0), 
-                                   expand=True, 
-                                   ipady=self.scrollable_height)
+                                             fg_color='transparent',
+                                             orientation="vertical"
+                                                        )
+         # self.scrollable_frame.pack(fill="both",
+         #                            pady=(0,0), 
+         #                            expand=True, 
+         #                            ipady=self.scrollable_height)
+        self.scrollable_frame.grid(row=1, column=0, sticky="nsew")
+
+        self.root.grid_rowconfigure(0, weight=0)  # Top row (menu bar)
+        self.root.grid_rowconfigure(1, weight=1)  # Bottom row (scrollable frame)
+        self.root.grid_columnconfigure(0, weight=1)  # Column for the entire layout
+
+        self.scrollable_frame.grid_rowconfigure(0, weight=0)   # Make the row not expand
+        self.scrollable_frame.grid_rowconfigure(1, weight=1)   # Make the row expand
+        self.scrollable_frame.grid_columnconfigure(0, weight=1) # Make the column expand
 
         # Steam Text
         text_frame = ctk.CTkFrame(self.scrollable_frame,
-                                  fg_color= 'transparent'
-                                  )
-        text_frame.pack(padx=5,
-                        pady=(0, 5),
-                        fill="x"
-                        )
+                                   fg_color= 'transparent'
+                                   )
+        # text_frame.pack(padx=5,
+        #                 pady=(0, 5),
+        #                 fill="x"
+        #                 )
+        text_frame.grid(row=0, column=0, padx=5, pady=(0, 5), sticky="ew")
 
         steam_text = ctk.CTkLabel(text_frame,
                                   text="Steam Games",
-                                  font=("Ariel", 30, "bold")
-                                  )
-        steam_text.pack(anchor="nw",
-                        pady=(5,10),
-                        padx=(20,0)
-                       )
+                                   font=("Ariel", 30, "bold")
+                                   )
+        # steam_text.pack(anchor="nw",
+        #                 pady=(5,10),
+        #                 padx=(20,0)
+        #                )
 
+        steam_text.grid(row=0, column=0, padx=(20, 0), pady=(5, 10), sticky="nw")
+
+        # #num_columns = self.adjust_columns() # Get the number of columns dynamicaly
         self.create_steam_games_list()
 
-        # Epic Games Text
-        text_frame = ctk.CTkFrame(self.scrollable_frame,
-                                  fg_color= 'transparent'
-                                  )
-        text_frame.pack(padx=5,
-                        pady=(10, 5),
-                        fill="x"
-                        )
+        # # Epic Games Text
+        # # text_frame = ctk.CTkFrame(self.scrollable_frame,
+        # #                           fg_color= 'transparent'
+        # #                           )
+        # # text_frame.pack(padx=5,
+        # #                 pady=(10, 5),
+        # #                 fill="x"
+        # #                 )
 
-        epic_text = ctk.CTkLabel(text_frame,
-                                  text="Epic Games",
-                                  font=("Ariel", 30, "bold")
-                                  )
-        epic_text.pack(anchor="nw",
-                        pady=(5,10),
-                        padx=(20,0)
-                       )
+        # # epic_text = ctk.CTkLabel(text_frame,
+        # #                           text="Epic Games",
+        # #                           font=("Ariel", 30, "bold")
+        # #                           )
+        # # epic_text.pack(anchor="nw",
+        # #                 pady=(5,10),
+        # #                 padx=(20,0)
+        # #                )
 
-        self.create_epic_games_list()
+        # # self.create_epic_games_list()
 
 # -----------------------------------------------------------------------------------------
     def create_menu_bar(self):
         frame = ctk.CTkFrame(self.root,
                             corner_radius= 0
                             )
-        frame.pack(fill="x")
+        # frame.pack(fill="x")
+        frame.grid(row=0, column=0, sticky="ew")
+
+        # Make the column span the width of the page
+        self.root.grid_columnconfigure(0, weight=1) 
 
         # Create Launcher Icon and title
         title = ctk.CTkLabel(frame, 
@@ -266,7 +287,8 @@ class Main_Window:
                             padx=20,
                             pady=10
                             )
-        title.pack(side="left")
+        # title.pack(side="left")
+        title.grid(row=0, column=0, padx=0, pady=10, sticky="w")
 
         # Create settings button
         if self.color == "dark":
@@ -287,7 +309,9 @@ class Main_Window:
                                  command=self.Show_Settings_Menu
                                 )
         
-        settings.pack(side="right", anchor="e", padx=(0,10))
+        # settings.pack(side="right", anchor="e", padx=(0,10))
+        settings.grid(row=0, column=2, padx=(0, 15), sticky="e")
+
 
         # Create mode toggle button
         if self.color == "dark":
@@ -306,7 +330,17 @@ class Main_Window:
                                     hover=False,
                                     command=self.Toggle_Mode
                                     )
-        toggle_mode.pack(side="right", anchor="e", padx=(0,5))
+        
+        # toggle_mode.pack(side="right", anchor="e", padx=(0,5))
+        toggle_mode.grid(row=0, column=1, padx=(0, 5), sticky="e")
+
+        
+
+
+        # Make the row expand right after the "Home" title until the next icon
+        frame.grid_columnconfigure(0, weight=1) 
+        frame.grid_columnconfigure(1, weight=0)
+        frame.grid_columnconfigure(2, weight=0)
 
 
     def create_epic_games_list(self):
@@ -434,19 +468,17 @@ class Main_Window:
 # -----------------------------------------------------------------------------------------
     def create_steam_games_list(self):
         # Array of Games
-        self.steam_games_frame = ctk.CTkScrollableFrame(self.scrollable_frame, 
-                                                  orientation="horizontal",
+        self.steam_games_frame = ctk.CTkFrame(self.scrollable_frame, 
                                                   #fg_color = 'transparent',
-                                                  height = 465
                                    )
-        self.steam_games_frame.pack(padx=5,
-                         fill="both",
-                         expand=True
-                        )
+        # Old Pack Layout
+        # self.steam_games_frame.pack(padx=5,
+        #                  fill="both",
+        #                  expand=True
+        #                 )
 
-        
-
-        # Create button on the frame and fill it with the steam game
+        # New Grid Layout
+        self.steam_games_frame.grid(row=2, column=0, sticky="nsew", padx=5)        
         
         # Array of Game names and App ids sperately taken from self.steam_games array
         game_names = []
@@ -457,12 +489,11 @@ class Main_Window:
         # Sort the Dictionary by A-Z
         # print(f"Load config returns Steam (UNSORTED): '{self.steam_games}'")
         self.steam_games = OrderedDict(sorted(self.steam_games.items()))
-        print()
         print(f"Sorted Steam Games Dictionary: '{self.steam_games}'")
+        
         # print(f"Load config returns Epic (UNSORTED): {self.epic_games}")
-        self.epic_games = OrderedDict(sorted(self.epic_games.items()))
-        print()
-        print(f"Sorted Epic Games Dictionary: {self.epic_games}")
+        # self.epic_games = OrderedDict(sorted(self.epic_games.items()))
+        # print(f"Sorted Epic Games Dictionary: {self.epic_games}")
         
         # Process each config string
         for config_string in self.steam_games:
@@ -470,6 +501,10 @@ class Main_Window:
             for game_name, app_id in self.steam_games.items():
                 game_names.append(game_name)
                 app_ids.append(app_id)
+
+        num_columns = 4
+        for i in range(num_columns):
+            self.steam_games_frame.grid_columnconfigure(i, uniform="game")
 
         # print("Game Names:", game_names)  
         # print("App IDs:", app_ids)
@@ -479,17 +514,19 @@ class Main_Window:
         # Example of photo name of logo
         # 4000_library_600x900.jpg
 
-        steam_exe_path = self.steam_exe.get() # Store the exe path in var to manipulate
-        steam_logo_path = steam_exe_path.replace('steam.exe', 'appcache\\librarycache\\') # var that stores the icon cache of all photos
+        # steam_exe_path = self.steam_exe.get() # Store the exe path in var to manipulate
+        # steam_logo_path = steam_exe_path.replace('steam.exe', 'appcache\\librarycache\\') # var that stores the icon cache of all photos
         
-        logo_600x900 = "_library_600x900.jpg" # last half of the jpg file that is the same
+        # logo_600x900 = "_library_600x900.jpg" # last half of the jpg file that is the same
+
         counter = 0
         for game_name, app_id in self.steam_games.items():
             
-            app_id_logo_path = steam_logo_path + app_id + logo_600x900 # Path to game's logo
+            app_id_logo_path = get_cover_image(app_id) # Run Function to get the cover image either local or from API
             # print(f"Calling Function 'Create Steam Button' with {app_id_logo_path} as logo and {game_name} as game")
-            self.create_steam_game_button(app_id_logo_path, game_name, app_id, counter) # Function call to create steam game button
-            counter = counter + 1
+            self.create_steam_game_button(app_id_logo_path, game_name, app_id, counter, num_columns) # Function call to create steam game button
+            #self.steam_games_frame.grid_rowconfigure(counter, weight=1)  # Make rows expand evenly
+            counter += 1
         else:
             if counter == 0:
                 print("No games found in Steam AppManifest. Calling placeholder function...")
@@ -499,9 +536,6 @@ class Main_Window:
                 else:
                     print("Games Frame doesn't exist.")
                 self.steam_game_placeholder_text()
-
-                
-
 
 # -----------------------------------------------------------------------------------------
     def steam_game_placeholder_text(self):
@@ -514,10 +548,15 @@ class Main_Window:
         self.steam_game_frame = ctk.CTkFrame(self.scrollable_frame,
                                         height=100
                                         )
-        self.steam_game_frame.pack(padx=5,
-                         fill="both",
-                         expand=True
-                        )
+        # self.steam_game_frame.pack(padx=5,
+        #                  fill="both",
+        #                  expand=True
+        #                 )
+        self.steam_game_frame.grid(
+            row=1, column=0,
+            padx=5, pady=5,
+            sticky="nsew"
+    )
         
 
         placeholder_label = ctk.CTkLabel(self.steam_game_frame,
@@ -525,18 +564,27 @@ class Main_Window:
                                          text_color=current_text_color,
                                          font=("Ariel", 20, "normal")
                                         )
-        placeholder_label.pack(side="top",
-                               pady=20,
-                               padx=(50,0),
-                               expand=True
-                               )
-        
-        
-        
-        
+        # placeholder_label.pack(side="top",
+        #                        pady=20,
+        #                        padx=(50,0),
+        #                        expand=True
+        #                        )
+        placeholder_label.grid(
+        row=1, column=0,
+        padx=(50, 0), pady=20,
+        sticky="n"
+        )
+
+        # let the label’s cell expand (so centering works)
+        self.steam_game_frame.grid_rowconfigure(0, weight=1)
+        self.steam_game_frame.grid_columnconfigure(0, weight=1)
 
 # -----------------------------------------------------------------------------------------    
-    def create_steam_game_button(self, logo_path, game_name, app_id, iteration):
+    def create_steam_game_button(self, logo_path, game_name, app_id, iteration, num_columns):
+        # Determine the row and column based on the iteration
+        row = iteration // num_columns
+        column = iteration % num_columns
+        
         # Store the path to the play button image
         play_button_path = os.path.join(self.current_dir, 'Icons', 'Play-Button-light.png')
 
@@ -559,7 +607,7 @@ class Main_Window:
         canvas = ctk.CTkCanvas(self.steam_games_frame, width=300, height=450, bg=current_background_color, highlightthickness=0)
         canvas.image = game_image # Keep reference
         canvas.create_image(0, 0, anchor='nw', image=game_image) # Add the image to the canvas
-        canvas.grid(row=0, column=iteration, padx=10, pady=(10, 10))
+        canvas.grid(row=row, column=column, padx=10, pady=10)
 
         # Add Game Name above the button
         # steam_game_text = ctk.CTkLabel(
@@ -575,11 +623,11 @@ class Main_Window:
             image=play_button_image,
             font=("Ariel", 16, "bold"),
             fg_color="transparent",
-            bg_color= '#059212',
+            bg_color= 'transparent',
             text_color="white",
-            width=135,
+            width=80,
             height=50,
-            hover_color="#06D001",
+            hover_color="#756e6d",
             corner_radius=0,
             border_width=0,
             anchor="center",
@@ -588,7 +636,7 @@ class Main_Window:
 
         # Set button padding
         padding_x = 10
-        button_x = (300 - padding_x) / 2  # Center button with padding
+        button_x = (300 - padding_x) / 2# Center button with padding
         button_y = 400  # Position button near the bottom of the canvas
 
         # Place the button on the canvas with padding
@@ -597,10 +645,14 @@ class Main_Window:
 
 # -----------------------------------------------------------------------------------------
     def Show_Settings_Menu(self): # This function should wipe all widgets on screen and then show the settings menu
-        print("Settings Menu!")
-        #self.Kill_All_Widgets() # Kill all widgets on the current screen
+        if (hasattr(self, "settings_frame") and self.settings_frame.winfo_exists()):
+            print("Settings Menu Already Open")
+            return # If the settings frame already exists, do nothing
+
+        print("Opened Settings Menu!")
         self.Create_Settings_Widgets() # Creates settings widgets
         
+# -----------------------------------------------------------------------------------------
     def refresh_launchers(self):
         self.settings_Window.destroy()
         if self.Update_Steam == True or self.Update_Epic == True:
@@ -617,7 +669,7 @@ class Main_Window:
                                                
                                                )
 
-        self.settings_Window.geometry("800x500")
+        self.settings_Window.geometry("625x325")
         self.settings_Window.title("Settings")
         
         self.settings_Window.iconbitmap(self.icon_path) # Now set the custom icon using the path made above.
@@ -637,7 +689,7 @@ class Main_Window:
                                   )
         
         self.load_steam_settings() # Load UI for steam path settings
-        self.load_epic_games_settings() # Load UI for epic path settings
+        #self.load_epic_games_settings() # Load UI for epic path settings
         popup_hwnd = windll.user32.GetParent(self.settings_Window.winfo_id())
         self.Set_Title_Bar(popup_hwnd)
         self.settings_Window.attributes('-topmost', True)
@@ -821,23 +873,34 @@ class Main_Window:
         
 # -----------------------------------------------------------------------------------------
     def browse_file(self, id):
-        file_path = filedialog.askdirectory()
-        if file_path:
-            if id == 1:
-                self.steam_path1.set(file_path)
-                update_config(self.config_path, self.steam_path1.get(), 1)
-                print(f"Path1 Updated to '{file_path}'")
-                self.Update_Steam = True
-            elif id == 2:
-                self.steam_path2.set(file_path)
-                update_config(self.config_path, self.steam_path2.get(), 2)
-                print(f"Path2 Updated to '{file_path}'")
-                self.Update_Steam = True
-            elif id == 3:
-                self.epic_path1.set(file_path)
-                update_config(self.config_path, self.epic_path1.get(), 3)
-                print(f"Path3 Updated to '{file_path}'")
-                self.Update_Epic = True
+        if self.dialog_open == True:
+            print("Dialog already open")
+            return
+
+        # Mark the dialog as open
+        self.dialog_open = True
+        
+        try:
+            file_path = filedialog.askdirectory()
+            if file_path:
+                if id == 1:
+                    self.steam_path1.set(file_path)
+                    update_config(self.config_path, self.steam_path1.get(), 1)
+                    print(f"Path1 Updated to '{file_path}'")
+                    self.Update_Steam = True
+                elif id == 2:
+                    self.steam_path2.set(file_path)
+                    update_config(self.config_path, self.steam_path2.get(), 2)
+                    print(f"Path2 Updated to '{file_path}'")
+                    self.Update_Steam = True
+                elif id == 3:
+                    self.epic_path1.set(file_path)
+                    update_config(self.config_path, self.epic_path1.get(), 3)
+                    print(f"Path3 Updated to '{file_path}'")
+                    self.Update_Epic = True
+
+        finally:
+            self.dialog_open = False  # Mark the dialog as closed
 
 # -----------------------------------------------------------------------------------------
     def clear_file(self, id):
@@ -939,3 +1002,19 @@ class Main_Window:
             # Set Title bar color
             self.title_bar_color = self.dark_bar_color # This is the inverted color of what is shown on the screen when run. For some reason.
             windll.dwmapi.DwmSetWindowAttribute(HWND,35,byref(c_int(self.title_bar_color)), sizeof(c_int))
+
+# -----------------------------------------------------------------------------------------
+    def adjust_columns(self):
+        window_width = self.root.winfo_width()  # **Get the current width of the window**
+        num_columns = window_width // 350  # Assuming each button takes up around 350px  # **Calculate number of columns**
+        return max(num_columns, 2)  # **Ensure there is a minimum of 2 columns**
+    # -----------------------------------------------------------------------------------------
+
+    def calculate_scrollable_height(self):
+        # Set the scrollable height of the window
+        # Now that the window is drawn, calculate the scrollable height
+        window_height = self.root.winfo_height()
+        self.scrollable_height = int(window_height)
+    
+        # Now you can use self.scrollable_height in the rest of your layout
+        print(f"Calculated scrollable height: {self.scrollable_height}")
