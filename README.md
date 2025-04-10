@@ -12,10 +12,10 @@ This program's main dependency is the path you provide to it. The program will l
 - [x] Simple GUI/Settings
 - [x] Dark/Light Mode
 - [x] Steam Support
-- [x] Epic Games Support
+- [ ] Epic Games Support
 - [ ] Battle.NET Support
 - [ ] Xbox support
-- [ ] Linux support?
+- [ ] Linux support
 
 ### Credits & Resources
 - [icons8.com]("https://icons8.com)
