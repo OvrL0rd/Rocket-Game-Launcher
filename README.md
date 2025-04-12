@@ -13,8 +13,7 @@ This program's main dependency is the path you provide to it (currently it defau
 - [x] Dark/Light Mode
 - [x] Steam Support
 - [ ] Epic Games Support
-- [ ] Battle.NET Support
-- [ ] Xbox support
+- [ ] Heroic Launcher Support
 - [ ] Linux support
 
 ### Credits & Resources
