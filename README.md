@@ -1,6 +1,6 @@
 # ReadMe
 ## Rocket-Game-Launcher
-A GUI application written solely in python.
+A GUI application written in python.
 
 ### Description
 Rocket Game Launcher is a simple easy to use GUI interface written with customtkiner python. This project is very simple at the moment and launches any steam game when given the correct appmanifests file path. It also has support for multiple drives/install locations as well.
