@@ -14,11 +14,9 @@
 #                 ├── Icons/
 #                 │   └── All icons/images
 #                 ├── Main_Window/
-#                 │   ├── __init__.py                   # Needed for module practices.
+#                 │   ├── __init__.py
 #                 │   ├── Main_Window_Class.py          # Class definition for the Main Window.
 #                 │   └── Class_Dependencies.py         # New module for Main Window's dependent functions.
-#                 ├── Installer_Wizard.py               # Install Script for first setup of this program.
-#                 └── Steam_Launcher.exe                # Executable program converted from 'pyinstaller' module.
 # ---------------------------------------------------------------------------------------------------------------
 # Import Statement(s)
 # -------------------
