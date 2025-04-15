@@ -42,20 +42,25 @@ class Main_Window:
         self.calculate_scrollable_height() # Calculate the scrollable height of the window
         
 
-        self.color = None # Set color(dark/light mode)
+        self.color = ctk.StringVar() # Set color(dark/light mode)
         theme = self.get_windows_theme() # Get window's current theme and set self.color to it
         
+
         # Set the dark/light mode title bar colors
         self.light_bar_color = 0x00dbdbdb
         self.dark_bar_color = 0x002b2b2b
 
+        # Game Image Blur
+        self.blur_enabled = ctk.BooleanVar()  # Create a BooleanVar to store the state of the checkbox
+        self.blur_enabled.set(True) # Set the default value to True
+
         self.HWND = windll.user32.GetParent(root.winfo_id())
 
-        if theme == "light": # Set the title bar color to light mode
+        if theme.get() == "light": # Set the title bar color to light mode
             # Set Title bar color
             title_bar_color = self.light_bar_color # This is the inverted color of what is shown on the screen when run. For some reason.
             windll.dwmapi.DwmSetWindowAttribute(self.HWND,35,byref(c_int(title_bar_color)), sizeof(c_int))
-        elif theme == "dark": # Set the title bar color to dark mode
+        elif theme.get() == "dark": # Set the title bar color to dark mode
             # Set Title bar color
             self.title_bar_color = self.dark_bar_color # This is the inverted color of what is shown on the screen when run. For some reason.
             windll.dwmapi.DwmSetWindowAttribute(self.HWND,35,byref(c_int(self.title_bar_color)), sizeof(c_int))
@@ -188,10 +193,10 @@ class Main_Window:
 
             # Determine theme based on the registry value
             if value == 1:
-                self.color = "light"
+                self.color = ctk.StringVar(value="light") # Set the color to light mode
                 return self.color
             else:
-                self.color = "dark"
+                self.color = ctk.StringVar(value="dark") # Set the color to dark mode
                 return self.color
 
         except Exception as e:
@@ -291,10 +296,10 @@ class Main_Window:
         title.grid(row=0, column=0, padx=0, pady=10, sticky="w")
 
         # Create settings button
-        if self.color == "dark":
+        if self.color.get() == "dark":
             settings_icon_path = os.path.join(self.current_dir, 'Icons', 'Settings-Gear-light.png') # Create full path of image
             
-        elif self.color == "light":
+        elif self.color.get() == "light":
             settings_icon_path = os.path.join(self.current_dir, 'Icons', 'Settings-Gear-dark.png') # Create full path of image
 
         settings_image = Image.open(settings_icon_path)
@@ -314,9 +319,9 @@ class Main_Window:
 
 
         # Create mode toggle button
-        if self.color == "dark":
+        if self.color.get() == "dark":
             mode_icon_path = os.path.join(self.current_dir, 'Icons', 'Switch-Mode-light.png') # Create full path of image
-        elif self.color == "light":
+        elif self.color.get() == "light":
             mode_icon_path = os.path.join(self.current_dir, 'Icons', 'Switch-Mode-dark.png') # Create full path of image
         
         mode_image = Image.open(mode_icon_path)
@@ -375,10 +380,10 @@ class Main_Window:
         
     # -----------------------------------------------------------------------------------------
     def epic_game_placeholder_text(self):
-        if self.color == 'dark':
+        if self.color.get() == 'dark':
             # current_text_color = "#dce4ee"
             current_text_color = "#777777"
-        elif self.color == 'light':
+        elif self.color.get() == 'light':
             current_text_color = "#1a1a1a"
         
         self.epic_game_frame = ctk.CTkFrame(self.scrollable_frame,
@@ -426,9 +431,9 @@ class Main_Window:
             game_image = ImageTk.PhotoImage(rounded_blurred_image)
 
         # Create a CTkCanvas to overlay the button on the image
-        if self.color == 'dark':
+        if self.color.get() == 'dark':
             current_background_color = "#2b2b2b"
-        elif self.color == 'light':
+        elif self.color.get() == 'light':
             current_background_color = "#dbdbdb"
         canvas = ctk.CTkCanvas(self.epic_games_frame, width=300, height=450, bg=current_background_color, highlightthickness=0)
         canvas.image = game_image # Keep reference
@@ -539,10 +544,10 @@ class Main_Window:
 
 # -----------------------------------------------------------------------------------------
     def steam_game_placeholder_text(self):
-        if self.color == 'dark':
+        if self.color.get() == 'dark':
             # current_text_color = "#dce4ee"
             current_text_color = "#777777"
-        elif self.color == 'light':
+        elif self.color.get() == 'light':
             current_text_color = "#1a1a1a"
         
         self.steam_game_frame = ctk.CTkFrame(self.scrollable_frame,
@@ -595,14 +600,20 @@ class Main_Window:
         # Load and process the image
         game_image_open = Image.open(logo_path)
         game_image_resize = game_image_open.resize((300, 450))
-        blurred_game_photo = add_blur_gradient(game_image_resize, 10, 0.2)  # Adjust blur effect and height ratio
-        rounded_blurred_image = add_rounded_corners(blurred_game_photo, 10) # Adjust radius of photo here
-        game_image = ImageTk.PhotoImage(rounded_blurred_image)
+        
+        # Adhear to user settings for game image blur
+        if self.blur_enabled.get() == True:
+            blurred_game_photo = add_blur_gradient(game_image_resize, 10, 0.15)  # Adjust blur effect and height ratio
+            rounded_blurred_image = add_rounded_corners(blurred_game_photo, 10) # Adjust radius of photo here
+            game_image = ImageTk.PhotoImage(rounded_blurred_image)
+        elif self.blur_enabled.get() == False:
+            rounded_image = add_rounded_corners(game_image_resize, 10)
+            game_image = ImageTk.PhotoImage(rounded_image)
 
         # Create a CTkCanvas to overlay the button on the image
-        if self.color == 'dark':
+        if self.color.get() == 'dark':
             current_background_color = "#2b2b2b"
-        elif self.color == 'light':
+        elif self.color.get() == 'light':
             current_background_color = "#dbdbdb"
         canvas = ctk.CTkCanvas(self.steam_games_frame, width=300, height=450, bg=current_background_color, highlightthickness=0)
         canvas.image = game_image # Keep reference
@@ -665,40 +676,100 @@ class Main_Window:
 
 # -----------------------------------------------------------------------------------------
     def Create_Settings_Widgets(self):
-        self.settings_Window = ctk.CTkToplevel(self.root,
-                                               
-                                               )
-
+        self.settings_Window = ctk.CTkToplevel(self.root)
         self.settings_Window.geometry("625x325")
         self.settings_Window.title("Settings")
-        
         self.settings_Window.iconbitmap(self.icon_path) # Now set the custom icon using the path made above.
         
-
         self.Settings_Menu_Bar()
-        # Implement the rest of the settings menu here
-        
+                
         # Create scrollable frame
-        self.settings_frame = ctk.CTkFrame(self.settings_Window,
-                                                       fg_color='transparent'
-                                                       )
+        self.settings_frame = ctk.CTkScrollableFrame(self.settings_Window,
+                                                     fg_color='transparent'
+                                                    )
         self.settings_frame.pack(fill="both",
                                    pady=(20,0), 
                                    expand=True, 
-                                   ipady=self.scrollable_height
+                                   #ipady=self.scrollable_height  # THIS MIGHT CAUSE THE ISSUE OF NOT SEEING CHECKBOX
                                   )
+        
+        self.settings_container = ctk.CTkFrame(self.settings_frame, fg_color='transparent')
+        self.settings_container.pack(fill="both", expand=True)
+
         
         self.load_steam_settings() # Load UI for steam path settings
         #self.load_epic_games_settings() # Load UI for epic path settings
+        self.load_user_settings_prefrences() # Load UI for user settings preferences
+        
         popup_hwnd = windll.user32.GetParent(self.settings_Window.winfo_id())
         self.Set_Title_Bar(popup_hwnd)
         self.settings_Window.attributes('-topmost', True)
         self.settings_Window.protocol("WM_DELETE_WINDOW", self.refresh_launchers)
         
+
+    def load_user_settings_prefrences(self):
+        # Frame
+        checkbox_text_frame = ctk.CTkFrame(self.settings_container,
+                                    #    fg_color='transparent'
+                                     )
+        
+        checkbox_text_frame.pack(padx=5,
+                            pady=(5,0),
+                            fill="x",
+                            expand=True
+                            )
+        
+        checkbox_text = ctk.CTkLabel(checkbox_text_frame, 
+                                       text="Preferences",
+                                       font=("Ariel", 20, "bold")
+                                       )
+        
+        checkbox_text.pack(anchor="w",
+                           padx=(40,0),
+                           pady=(10,0)
+                           )
+        
+        checkbox_frame = ctk.CTkFrame(checkbox_text_frame)
+        checkbox_frame.pack(fill="both", pady=10, padx=10)
+
+        
+        
+        # Checkbox itself
+        checkbox_blur = ctk.CTkCheckBox(checkbox_frame,
+                                    text="Enable Blur Effect",
+                                    variable=self.blur_enabled,
+                                    onvalue=True,
+                                    offvalue=False,
+                                    command=self.reload_main_window
+                                    )
+        
+        checkbox_blur.pack(anchor="w",
+                        padx=(40,0),
+                        pady=10
+                        )
+        
+        # Does not work as intended
+        # checkbox_theme = ctk.CTkCheckBox(checkbox_frame,
+        #                                  text="Enable Dark Mode",
+        #                                  onvalue="dark",
+        #                                  offvalue="light",
+        #                                  variable=self.color,
+        #                                  command=self.Toggle_Mode
+        #                              )
+
+        # checkbox_theme.pack(anchor="w",
+        #                     padx=(40,0),
+        #                     pady=10
+        #                    )
+
+    def reload_main_window(self):
+        self.Kill_All_Widgets()
+        self.create_dashboard()
+
 # -----------------------------------------------------------------------------------------
     def load_steam_settings(self):
         # Create settings frame
-        steam_settings_frame = ctk.CTkFrame(self.settings_frame,
+        steam_settings_frame = ctk.CTkFrame(self.settings_container,
                              #fg_color = 'transparent',
                              )
         steam_settings_frame.pack(padx=5,
@@ -929,9 +1000,9 @@ class Main_Window:
                             pady=(0, 0))
         
         # Create back button
-        if self.color == "dark":
+        if self.color.get() == "dark":
             back_button_icon_path = os.path.join(self.current_dir, 'Icons', 'Back-Arrow-light.png')
-        elif self.color == "light":
+        elif self.color.get() == "light":
             back_button_icon_path = os.path.join(self.current_dir, 'Icons', 'Back-Arrow-dark.png')
         
         back_button_image = Image.open(back_button_icon_path)
@@ -973,32 +1044,27 @@ class Main_Window:
             print (f"Destroyed {counter} Frames with widgets!")
         elif counter <= 0:
             print ("No Widgets destroyed.")
-
-# -----------------------------------------------------------------------------------------
-    def Toggle_Color(self):
-        if self.color == "dark":
-            self.color = "light"
-            return self.color
-        else:
-            self.color = "dark"
-            return self.color
         
 # ----------------------------------------------------------------------------------------- 
     def Toggle_Mode(self):
-        self.Toggle_Color()
+        # Get current mode and toggle it
+        current_mode = self.color.get()
+        self.color.set("light" if current_mode == "dark" else "dark")
+
+        # Change appearence mode & Update UI
         self.Kill_All_Widgets()
-        ctk.set_appearance_mode(self.color)
+        ctk.set_appearance_mode(self.color.get())
         self.Set_Title_Bar(self.HWND)
         self.create_dashboard()
 
 # -----------------------------------------------------------------------------------------
 
     def Set_Title_Bar(self, HWND):
-        if self.color == "light": # Set the title bar color to light mode
+        if self.color.get() == "light": # Set the title bar color to light mode
             # Set Title bar color
             title_bar_color = self.light_bar_color # This is the inverted color of what is shown on the screen when run. For some reason.
             windll.dwmapi.DwmSetWindowAttribute(HWND,35,byref(c_int(title_bar_color)), sizeof(c_int))
-        elif self.color == "dark": # Set the title bar color to dark mode
+        elif self.color.get() == "dark": # Set the title bar color to dark mode
             # Set Title bar color
             self.title_bar_color = self.dark_bar_color # This is the inverted color of what is shown on the screen when run. For some reason.
             windll.dwmapi.DwmSetWindowAttribute(HWND,35,byref(c_int(self.title_bar_color)), sizeof(c_int))
