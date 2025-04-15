@@ -35,8 +35,8 @@ class Main_Window:
     def __init__(self, root):
         self.root = root # set
         root.title("Rocket Game Launcher") # Define the Name of window
-        root.geometry("1325x900") # Define the size of the window
-        root.resizable(False, False)
+        root.geometry("1450x900") # Define the size of the window
+        root.resizable(True, True)
         
         self.scrollable_height = 0 # Set the scrollable height to 0
         self.calculate_scrollable_height() # Calculate the scrollable height of the window
@@ -50,9 +50,7 @@ class Main_Window:
         self.light_bar_color = 0x00dbdbdb
         self.dark_bar_color = 0x002b2b2b
 
-        # Game Image Blur
-        self.blur_enabled = ctk.BooleanVar()  # Create a BooleanVar to store the state of the checkbox
-        self.blur_enabled.set(True) # Set the default value to True
+        
 
         self.HWND = windll.user32.GetParent(root.winfo_id())
 
@@ -73,6 +71,11 @@ class Main_Window:
         # read config and set vars
         self.config_path = os.path.join(self.current_dir, 'Config', 'config.ini')
         path = read_config_file(self.config_path)
+
+        # Game Image Blur
+        self.blur_enabled = ctk.BooleanVar()  # Create a BooleanVar to store the state of the checkbox
+        user_blur_setting = self.load_blur_setting()
+        self.blur_enabled.set(user_blur_setting) # Set the value to the state of the config file
         
         # Set the state of the dialog window
         self.dialog_open = False
@@ -209,6 +212,7 @@ class Main_Window:
     def create_dashboard(self):
         self.Kill_All_Widgets() # Kill all widgets on the current screen
         self.create_menu_bar() # Create the top menu bar
+        self.create_vert_menu_bar() # Create the vertical menu bar
          # Create Steam Portion of the dashboard
 
          # Create scrollable frame
@@ -220,15 +224,10 @@ class Main_Window:
          #                            pady=(0,0), 
          #                            expand=True, 
          #                            ipady=self.scrollable_height)
-        self.scrollable_frame.grid(row=1, column=0, sticky="nsew")
+        self.scrollable_frame.grid(row=1, column=1, sticky="nsew")
 
-        self.root.grid_rowconfigure(0, weight=0)  # Top row (menu bar)
-        self.root.grid_rowconfigure(1, weight=1)  # Bottom row (scrollable frame)
-        self.root.grid_columnconfigure(0, weight=1)  # Column for the entire layout
+        self.root.grid_rowconfigure(1, weight=1)  # Expands games frame (the scrollable frame) to the bottom of the screen
 
-        self.scrollable_frame.grid_rowconfigure(0, weight=0)   # Make the row not expand
-        self.scrollable_frame.grid_rowconfigure(1, weight=1)   # Make the row expand
-        self.scrollable_frame.grid_columnconfigure(0, weight=1) # Make the column expand
 
         # Steam Text
         text_frame = ctk.CTkFrame(self.scrollable_frame,
@@ -238,18 +237,18 @@ class Main_Window:
         #                 pady=(0, 5),
         #                 fill="x"
         #                 )
-        text_frame.grid(row=0, column=0, padx=5, pady=(0, 5), sticky="ew")
+        text_frame.grid(row=1, column=1, padx=5, pady=(0, 5), sticky="ew")
 
         steam_text = ctk.CTkLabel(text_frame,
                                   text="Steam Games",
-                                   font=("Ariel", 30, "bold")
+                                   font=("Ariel", 30, "bold"),
                                    )
         # steam_text.pack(anchor="nw",
         #                 pady=(5,10),
         #                 padx=(20,0)
         #                )
 
-        steam_text.grid(row=0, column=0, padx=(20, 0), pady=(5, 10), sticky="nw")
+        steam_text.grid(row=2, column=1, padx=(20, 0), pady=(5, 10), sticky="ne")
 
         # #num_columns = self.adjust_columns() # Get the number of columns dynamicaly
         self.create_steam_games_list()
@@ -276,17 +275,22 @@ class Main_Window:
 
 # -----------------------------------------------------------------------------------------
     def create_menu_bar(self):
-        frame = ctk.CTkFrame(self.root,
+        l_frame = ctk.CTkFrame(self.root,
                             corner_radius= 0
                             )
-        # frame.pack(fill="x")
-        frame.grid(row=0, column=0, sticky="ew")
+        r_frame = ctk.CTkFrame(self.root,
+                            corner_radius= 0
+                            )
 
-        # Make the column span the width of the page
-        self.root.grid_columnconfigure(0, weight=1) 
+        # frame.pack(fill="x")
+        l_frame.grid(row=0, column=0, sticky="ew")
+        r_frame.grid(row=0, column=1, sticky="nsew")
+
+        # Makes the column '1' span the width of the page (the same column the games are on)
+        self.root.grid_columnconfigure(1, weight=1) 
 
         # Create Launcher Icon and title
-        title = ctk.CTkLabel(frame, 
+        title = ctk.CTkLabel(l_frame, 
                             text="Home",
                             font=("Ariel", 27, "bold"),
                             padx=20,
@@ -304,7 +308,7 @@ class Main_Window:
 
         settings_image = Image.open(settings_icon_path)
         settings_icon = ctk.CTkImage(settings_image)
-        settings = ctk.CTkButton(frame,
+        settings = ctk.CTkButton(r_frame,
                                  image=settings_icon,
                                  width=5,
                                  height=5,
@@ -315,7 +319,7 @@ class Main_Window:
                                 )
         
         # settings.pack(side="right", anchor="e", padx=(0,10))
-        settings.grid(row=0, column=2, padx=(0, 15), sticky="e")
+        settings.grid(row=0, column=2, padx=(0, 15), pady=(20,0), sticky="e")
 
 
         # Create mode toggle button
@@ -326,7 +330,7 @@ class Main_Window:
         
         mode_image = Image.open(mode_icon_path)
         mode_icon = ctk.CTkImage(mode_image)
-        toggle_mode = ctk.CTkButton(frame,
+        toggle_mode = ctk.CTkButton(r_frame,
                                     image=mode_icon,
                                     width=5,
                                     height=5,
@@ -337,15 +341,52 @@ class Main_Window:
                                     )
         
         # toggle_mode.pack(side="right", anchor="e", padx=(0,5))
-        toggle_mode.grid(row=0, column=1, padx=(0, 5), sticky="e")
+        toggle_mode.grid(row=0, column=1, padx=(0, 5), pady=(20,0), sticky="e")
 
-        
+        # Moves the two icons to the right side of the screen (on column 1, the title is on column 0 which is seperate)
+        r_frame.grid_columnconfigure(0, weight=1) 
+        r_frame.grid_columnconfigure(1, weight=0)
+        r_frame.grid_columnconfigure(2, weight=0)
+
+    def create_vert_menu_bar(self):
+        # Vertical Frame
+        vertical_column_frame = ctk.CTkFrame(self.root, width=150, corner_radius=0)
+        vertical_column_frame.grid(row=1, column=0, sticky="nsew") # Make the frame stick to the left side of the window
+
+        # self.root.grid_columnconfigure(0, weight=0, minsize=150) # DELETE AFTER TESTING
+
+        steam_icon_path = os.path.join(self.current_dir, 'Icons', 'Steam-Icon.png') # Create full path of image
+        epic_games_icon_path = os.path.join(self.current_dir, 'Icons', 'Epic-Games-Icon.png') # Create full path of image
+
+        if os.path.exists(steam_icon_path):
+            steam_image = Image.open(steam_icon_path)
+            steam_image = steam_image.resize((25, 25))  # Resize the image to fit the button
+            steam_icon = ctk.CTkImage(steam_image, size=(25,25))
+            steam_games = ctk.CTkButton(vertical_column_frame, text="", font=("Ariel", 25, "bold"), image=steam_icon, command=self.create_steam_games_list, height=75, width=100, fg_color='transparent')
+        else:
+            steam_games = ctk.CTkButton(vertical_column_frame, text="Steam", font=("Ariel", 25, "bold"), command=self.create_steam_games_list, height=50, width=200)
+            print(f"Steam Icon not found at {steam_icon_path}")
+
+        if os.path.exists(epic_games_icon_path):
+            epic_games_image = Image.open(epic_games_icon_path)
+            epic_games_image = epic_games_image.resize((70, 50))  # Resize the image to fit the button
+            epic_games_icon = ctk.CTkImage(epic_games_image, size=(70,50))
+            epic_games = ctk.CTkButton(vertical_column_frame, text="", font=("Ariel", 25, "bold"), image=epic_games_icon, command=self.create_epic_games_list, height=75, width=100, fg_color='transparent')
+        else:
+            epic_games = ctk.CTkButton(vertical_column_frame, text="Epic Games", font=("Ariel", 25, "bold"), command=self.create_epic_games_list, height=50, width=200)
+            print(f"Epic Games Icon not found at {epic_games_icon_path}")
 
 
-        # Make the row expand right after the "Home" title until the next icon
-        frame.grid_columnconfigure(0, weight=1) 
-        frame.grid_columnconfigure(1, weight=0)
-        frame.grid_columnconfigure(2, weight=0)
+        column_title = ctk.CTkLabel(vertical_column_frame, text="Launchers", font=("Ariel", 35, "bold"), fg_color='transparent')
+        #column_title.pack(pady=(10, 0), padx=(20, 20))
+
+        # Buttons
+        # home_button = ctk.CTkButton(vertical_column_frame, text="Home", command=self.create_dashboard)
+        # home_button.pack(pady=(10, 0), padx=(10, 0))
+
+        steam_games.pack(pady=(20, 0), padx=5, anchor="w")
+
+        epic_games.pack(pady=(20, 0), padx=5, anchor="w")
 
 
     def create_epic_games_list(self):
@@ -483,7 +524,7 @@ class Main_Window:
         #                 )
 
         # New Grid Layout
-        self.steam_games_frame.grid(row=2, column=0, sticky="nsew", padx=5)        
+        self.steam_games_frame.grid(row=2, column=1, sticky="nsew", padx=(15, 5))
         
         # Array of Game names and App ids sperately taken from self.steam_games array
         game_names = []
@@ -666,6 +707,7 @@ class Main_Window:
 # -----------------------------------------------------------------------------------------
     def refresh_launchers(self):
         self.settings_Window.destroy()
+        self.save_blur_setting(self.current_blur_state)
         if self.Update_Steam == True or self.Update_Epic == True:
             self.Update_Steam = False
             self.Update_Epic = False
@@ -676,10 +718,12 @@ class Main_Window:
 
 # -----------------------------------------------------------------------------------------
     def Create_Settings_Widgets(self):
+        self.current_blur_state = self.blur_enabled.get()
         self.settings_Window = ctk.CTkToplevel(self.root)
-        self.settings_Window.geometry("625x325")
+        self.settings_Window.geometry("625x335")
         self.settings_Window.title("Settings")
         self.settings_Window.iconbitmap(self.icon_path) # Now set the custom icon using the path made above.
+        self.settings_Window.resizable(False, False) # Make the window not resizable
         
         self.Settings_Menu_Bar()
                 
@@ -688,7 +732,7 @@ class Main_Window:
                                                      fg_color='transparent'
                                                     )
         self.settings_frame.pack(fill="both",
-                                   pady=(20,0), 
+                                   pady=(5,0), 
                                    expand=True, 
                                    #ipady=self.scrollable_height  # THIS MIGHT CAUSE THE ISSUE OF NOT SEEING CHECKBOX
                                   )
@@ -696,10 +740,10 @@ class Main_Window:
         self.settings_container = ctk.CTkFrame(self.settings_frame, fg_color='transparent')
         self.settings_container.pack(fill="both", expand=True)
 
-        
+        self.load_user_settings_prefrences() # Load UI for user settings preferences
         self.load_steam_settings() # Load UI for steam path settings
         #self.load_epic_games_settings() # Load UI for epic path settings
-        self.load_user_settings_prefrences() # Load UI for user settings preferences
+        
         
         popup_hwnd = windll.user32.GetParent(self.settings_Window.winfo_id())
         self.Set_Title_Bar(popup_hwnd)
@@ -714,7 +758,7 @@ class Main_Window:
                                      )
         
         checkbox_text_frame.pack(padx=5,
-                            pady=(5,0),
+                            pady=(0,15),
                             fill="x",
                             expand=True
                             )
@@ -1084,3 +1128,35 @@ class Main_Window:
     
         # Now you can use self.scrollable_height in the rest of your layout
         print(f"Calculated scrollable height: {self.scrollable_height}")
+
+    # ------------------------------------------------------------------------------------------
+    def load_blur_setting(self):
+        config = configparser.ConfigParser()
+        if os.path.exists(self.config_path):
+            config.read(self.config_path)
+            try:
+                state = config.getboolean('Settings', 'blur_enabled', fallback=True)  # Default to True if not found
+                return state
+            except Exception as e:
+                print(f"Error reading blur_enabled from config: {e}")
+        return True  # Default to True if the config file doesn't exist
+    
+    # ------------------------------------------------------------------------------------------
+    def save_blur_setting(self, current):
+        if current != self.blur_enabled.get():
+            config = configparser.ConfigParser()
+            if os.path.exists(self.config_path):
+                config.read(self.config_path)
+            if 'Settings' not in config:
+                config['Settings'] = {}
+            config['Settings']['blur_enabled'] = str(self.blur_enabled.get())  # Save the current value
+
+            with open(self.config_path, 'w') as config_file:
+                config.write(config_file)
+            print("Blur setting saved.")
+        else:
+            print("Blur setting unchanged.")
+        
+
+    # ------------------------------------------------------------------------------------------
+    
