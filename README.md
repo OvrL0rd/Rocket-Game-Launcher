@@ -3,16 +3,17 @@
 A GUI application written solely in python.
 
 ### Description
-Rocket Game Launcher is a simple easy to use GUI interface written out of the customtkiner python library. This project is very simple at the moment and launches any steam game when given the correct appmanifests file path. It also has support for multiple drives/install locations as well.
+Rocket Game Launcher is a game launcher written in python using custom tkinter. This project is simple at the moment and launches any steam/epic game when given the correct manifests path. It also has support for multiple drives/install locations as well (up to 2 total drives at this time). Currently this program only works for windows machines (unless you want to edit the config file to work with linux).
 
 ### Usage
-This program's main dependency is the path you provide to it. The program will list what is in that folder you specifiy (given it is the correct file type). The folder location depends on your steam install location but for most systems it would be 'C:\Program Files (x86)\Steam\steamapps\'. The files there are '.acf' files which are the manifest files the program parses and lists your games. For other installations to a seperate drive you would have to know where that path is and locate those .acf files then input that path to the program. I have not tested this on linux so I can't say 100% that it works as intended.
+This program depends on the path you provide it. At the moment there are 2 steam paths (for multiple drives) and one for epic games (as epic handles it differently). Since both of these launchers handle app data differently the location of the two will be different. For Epic Games (as long as you downloaded the launcher in the default path) the path already set in the config file will be the correct one. This path works for multiple drives so you do not have to worry about setting multiple paths. For Steam it is a little different. The path where you have your games downloaded will be the path to set (The default one is already set in the config file). If you have other drives where you store your games then find the 'steamapps' folder in that drive and set it to that folder. As the program will be looking for the .acf files which contain the game data to display.
 
 ### Features In the Works
 - [x] Simple GUI/Settings
 - [x] Dark/Light Mode
 - [x] Steam Support
 - [x] Epic Games Support
+- [ ] Sorting (Including Recently Used Game Sorting)
 - [ ] Searching
 
 ### Future Features
