@@ -24,8 +24,9 @@ import sys                                                          # For access
 import winreg                                                       # For accessing and modifying Windows registry
 from collections import OrderedDict                                 # For sorting dictionary
 from ctypes import windll, byref, sizeof, c_int                     # To change the title bar color
+from enum import Enum                                               # For enum variable to track sorted state
 
-# Import Steam_Launcher functions
+# Import RGL_Launcher functions
 from .Class_Dependencies import *                                   # Import all functions/methods from the 'Class_Dependencies.py' file
 
 
@@ -41,16 +42,12 @@ class Main_Window:
         self.scrollable_height = 0 # Set the scrollable height to 0
         self.calculate_scrollable_height() # Calculate the scrollable height of the window
         
-
         self.color = ctk.StringVar() # Set color(dark/light mode)
         theme = self.get_windows_theme() # Get window's current theme and set self.color to it
-        
 
         # Set the dark/light mode title bar colors
         self.light_bar_color = 0x00dbdbdb
         self.dark_bar_color = 0x002b2b2b
-
-        
 
         self.HWND = windll.user32.GetParent(root.winfo_id())
 
@@ -81,7 +78,8 @@ class Main_Window:
         self.dialog_open = False
 
         # Retrieve the API key from the environment variable
-        load_dotenv()
+        env_path = ".env"
+        load_dotenv(env_path)
         self.api_key = os.getenv('GIANT_BOMB_API_KEY') # Set the API key to a global variable
 
         # Set global launcher paths and executables to the value in the config file
@@ -92,7 +90,7 @@ class Main_Window:
         self.epic_path1_current = path["Epic Games"]["path1"]
         self.epic_executable_current = path["Epic Games"]["executable"]
 
-        # This is for future implementation of Epic Games, Battle.NET, and Xbox
+        # This is for future implementation of Battle.NET, Xbox, etc.
         #battle_path1_current = path["Battle.NET"]["path1"]
         #battle_path2_current = path["Battle.NET"]["path2"]
         #self.battle_executable_path = path["Battle.NET"]["executable"]
@@ -108,7 +106,7 @@ class Main_Window:
         self.epic_path1 = StringVar()
         self.epic_exe = StringVar()
         
-        # This is for future implementation of Epic Games, Battle.NET, and Xbox
+        # This is for future implementation of Battle.NET, Xbox, etc.
         #self.battle_path1 = StringVar()
         #self.battle_path2 = StringVar()
         #self.battle_exe = StringVar()
@@ -121,10 +119,11 @@ class Main_Window:
         self.steam_path2.set(self.steam_path2_current)
         self.steam_exe.set(self.steam_executable_current)
 
-        # This is for future implementation of Epic Games, Battle.NET, and Xbox
+        
         self.epic_path1.set(self.epic_path1_current)
         self.epic_exe.set(self.epic_executable_current)
         
+        # This is for future implementation of Battle.NET, Xbox, etc.
         #self.battle_path1.set(battle_path1_current)
         #self.battle_path2.set(battle_path2_current)
         
@@ -136,14 +135,23 @@ class Main_Window:
         self.steam_games = {}
         self.epic_games = {}
 
+        # Bool vars to keep track if the settings changes the path from the config's path
         self.Update_Steam = False
         self.Update_Epic = False
 
-        self.create_dashboard()
+        # Track current sorting method for the game lists (AZ, ZA, Recently Used)
+        self.current_sort = StringVar()
+        self.current_sort.set("A-Z")  # Default to A-Z sorting
+
+        # Track the destoryed game frame for refreshing the sorted order
+        self.destroyed_game_frame = None
+
+        self.load_config() # Loads config from config.ini that returns dictionary of steam & epic games
+        self.create_dashboard() # Create GUI
 
     # Function to load the config file to use for the Listbox of Games.
     def load_config(self):
-        print(f"Reading in data from config file...")
+        print(f"Reading in data from config.ini...")
         paths_data = read_config_file(self.config_path)
         section_vars = create_section_vars(paths_data)
         self.paths_dict = store_path_vars(section_vars)
@@ -174,6 +182,7 @@ class Main_Window:
         if epic_paths['path1']:
             try:
                 self.epic_games.update(get_epic_games(epic_paths['path1'], launcher_executable_path))
+
             except ValueError as val_err:
                 val_err = "[Value Error] dictionary update sequence element #0 has length 1; 2 is required"
                 messagebox.showerror("Error", val_err)
@@ -213,65 +222,57 @@ class Main_Window:
         self.Kill_All_Widgets() # Kill all widgets on the current screen
         self.create_menu_bar() # Create the top menu bar
         self.create_vert_menu_bar() # Create the vertical menu bar
-         # Create Steam Portion of the dashboard
 
-         # Create scrollable frame
-        self.scrollable_frame = ctk.CTkScrollableFrame(self.root,
-                                             fg_color='transparent',
-                                             orientation="vertical"
-                                                        )
-         # self.scrollable_frame.pack(fill="both",
-         #                            pady=(0,0), 
-         #                            expand=True, 
-         #                            ipady=self.scrollable_height)
+        # Create scrollable frame
+        self.scrollable_frame = ctk.CTkScrollableFrame(self.root, fg_color='transparent', orientation="vertical")
         self.scrollable_frame.grid(row=1, column=1, sticky="nsew")
 
-        self.root.grid_rowconfigure(1, weight=1)  # Expands games frame (the scrollable frame) to the bottom of the screen
+        # Expands games frame (the scrollable frame) to the bottom of the screen
+        self.root.grid_rowconfigure(1, weight=1)  
 
-
-        # Steam Text
-        text_frame = ctk.CTkFrame(self.scrollable_frame,
-                                   fg_color= 'transparent'
-                                   )
-        # text_frame.pack(padx=5,
-        #                 pady=(0, 5),
-        #                 fill="x"
-        #                 )
+        # Header Text
+        text_frame = ctk.CTkFrame(self.scrollable_frame, fg_color= 'transparent')
         text_frame.grid(row=1, column=1, padx=5, pady=(0, 5), sticky="ew")
-
-        steam_text = ctk.CTkLabel(text_frame,
-                                  text="Steam Games",
-                                   font=("Ariel", 30, "bold"),
-                                   )
-        # steam_text.pack(anchor="nw",
-        #                 pady=(5,10),
-        #                 padx=(20,0)
-        #                )
-
+        steam_text = ctk.CTkLabel(text_frame, text="Games", font=("Ariel", 30, "bold"))
         steam_text.grid(row=2, column=1, padx=(20, 0), pady=(5, 10), sticky="ne")
 
-        # #num_columns = self.adjust_columns() # Get the number of columns dynamicaly
-        self.create_steam_games_list()
+        # Create sorting dropdown
+        sort_options = ["A-Z", "Z-A", "Recently Used"]
+        if self.current_sort.get() == "A-Z":
+            i = 0
+        elif self.current_sort.get() == "Z-A":
+            i = 1
+        elif self.current_sort.get() == "Recently Used":
+            i = 2
+            
+        sort_var = ctk.StringVar(value=sort_options[i])  # Default to A-Z
+        
+        # Set the dropdown color according to the mode (dark/light)
+        if self.color.get() == 'dark':
+            dropdown_fg_color = "#2b2b2b"
+            dropdown_text_color = "#ffffff"
+            dropdown_button_hover_color = "#878787"
+        elif self.color.get() == 'light':
+            dropdown_fg_color = "#dbdbdb"
+            dropdown_text_color = "#000000"
+            dropdown_button_hover_color = "#666666"
+        
+        # Create the dropdown menu
+        sort_dropdown = ctk.CTkOptionMenu(
+            self.scrollable_frame,
+            width=70,
+            values=sort_options,
+            variable=sort_var,
+            command=lambda x: self.change_sort(x),
+            fg_color=dropdown_fg_color,
+            text_color=dropdown_text_color,
+            button_color=dropdown_fg_color,
+            button_hover_color=dropdown_button_hover_color)
+        
+        # Put it in the grid layout
+        sort_dropdown.grid(row=1, column=1, padx=(0,5), pady=10, sticky="e")
 
-        # # Epic Games Text
-        # # text_frame = ctk.CTkFrame(self.scrollable_frame,
-        # #                           fg_color= 'transparent'
-        # #                           )
-        # # text_frame.pack(padx=5,
-        # #                 pady=(10, 5),
-        # #                 fill="x"
-        # #                 )
-
-        # # epic_text = ctk.CTkLabel(text_frame,
-        # #                           text="Epic Games",
-        # #                           font=("Ariel", 30, "bold")
-        # #                           )
-        # # epic_text.pack(anchor="nw",
-        # #                 pady=(5,10),
-        # #                 padx=(20,0)
-        # #                )
-
-        # # self.create_epic_games_list()
+        self.create_steam_games_list() # Auto Start on steam games (Home page?)
 
 # -----------------------------------------------------------------------------------------
     def create_menu_bar(self):
@@ -386,34 +387,48 @@ class Main_Window:
 
         steam_games.pack(pady=(20, 0), padx=5, anchor="w")
 
-        epic_games.pack(pady=(20, 0), padx=5, anchor="w")
-
+        epic_games.pack(pady=(20, 0), padx=5, anchor="w")        
 
     def create_epic_games_list(self):
-        self.epic_games_frame = ctk.CTkScrollableFrame(self.scrollable_frame, 
-                                                  orientation="horizontal",
-                                                  #fg_color = 'transparent',
-                                                  height = 465
-                                   )
-        self.epic_games_frame.pack(padx=5,
-                              pady=(0,5),
-                              fill="both",
-                              expand=True
-                        )
+        # Destory any game frame (including placeholder frames) currently on the screen
+        self.destory_games()
+
+        self.epic_games_frame = ctk.CTkFrame(self.scrollable_frame)
+        self.epic_games_frame.grid(row=2, column=1, sticky="nsew", padx=(15, 5))
         
+        self.epic_games_frame.grid_rowconfigure(0, weight=1)
+        self.epic_games_frame.grid_columnconfigure(0, weight=1)
+        
+        num_columns = 4
+        for i in range(num_columns):
+            self.epic_games_frame.grid_columnconfigure(i, uniform="game")
+
+        print("\n[Epic Games] Dictionary List:")
+        print(f"[Unsorted] Epic Games Dictionary (Name, [Exe, Launcher Exe]): {self.epic_games}")
+        
+        if self.current_sort.get() == "A-Z":
+            self.epic_games = OrderedDict(sorted(self.epic_games.items())) # Sort the steam game list A-Z
+        elif self.current_sort.get() == "Z-A":
+            self.epic_games = OrderedDict(sorted(self.epic_games.items(), reverse=True)) # Sort the steam game list Z-A
+        elif self.current_sort.get() == "Recently Used":
+            self.epic_games = OrderedDict(sorted(self.epic_games.items())) # FOR NOW just sort it normally A-Z
+        
+        print(f"[Sorted] Epic Games Dictionary (Name, [Exe, Launcher Exe]): {self.epic_games}")
+
         counter = 0
+        print()
         # Loop over the games in the library and run function to get photos (NOT IMPLEMENTED YET)
         for name, game_info in self.epic_games.items(): # Print items in epic games array
             game_exe_path = game_info['Executable']
             launcher_exe_path = game_info['Launcher Executable']
             # print(f"Game path for {name}: {game_exe_path} and launcher path is: {launcher_exe_path}")
-            self.create_epic_games_button(name, game_exe_path, launcher_exe_path, counter)
+            self.create_epic_games_button(name, game_exe_path, launcher_exe_path, counter, num_columns)
             counter += 1
         else:
             if counter == 0:
-                print("No games found in Steam AppManifest. Calling placeholder function...")
+                print("No games found in Epic Path. Calling placeholder function...")
                 if self.epic_games_frame.winfo_exists(): 
-                    self.epic_games_frame.pack_forget() # Destroy the scrollable frame and replace with a non scrollable one to present the text
+                    self.epic_games_frame.destroy() # Destroy the scrollable frame and replace with a non scrollable one to present the text
                     print("Games Frame Destroyed!")
                 else:
                     print("Games Frame doesn't exist.")
@@ -430,27 +445,39 @@ class Main_Window:
         self.epic_game_frame = ctk.CTkFrame(self.scrollable_frame,
                                         height=100
                                         )
-        self.epic_game_frame.pack(padx=5,
-                         fill="both",
-                         expand=True
-                        )
+        self.epic_game_frame.grid(row=2, column=1, sticky="nsew", padx=(15,5))
+
+        # Old Pack Method
+        # self.epic_game_frame.pack(padx=5,
+        #                  fill="both",
+        #                  expand=True
+        #                 )
         
 
         placeholder_label = ctk.CTkLabel(self.epic_game_frame,
                                          text="No Games Found",
                                          text_color=current_text_color,
-                                         font=("Ariel", 20, "normal")
+                                         font=("Ariel", 25, "bold")
                                         )
-        placeholder_label.pack(side="top",
-                               pady=20,
-                               padx=(50,0),
-                               expand=True
-                               )
+        placeholder_label.grid(row=0, column=0, sticky="nsew")
+
+        
+        # Old Pack Method
+        # placeholder_label.pack(side="top",
+        #                        pady=20,
+        #                        padx=(50,0),
+        #                        expand=True
+        #                        )
+
+        self.epic_game_frame.grid_rowconfigure(0, weight=1)
+        self.epic_game_frame.grid_columnconfigure(0, weight=1)
 
 
     # -----------------------------------------------------------------------------------------
-    def create_epic_games_button(self, game_name, game_path, launcher_path, iteration):
-        
+    def create_epic_games_button(self, game_name, game_path, launcher_path, iteration, num_columns):
+        # Determine the row and column based on the iteration
+        row = iteration // num_columns
+        column = iteration % num_columns
         
         # Store the path to the play button image
         play_button_path = os.path.join(self.current_dir, 'Icons', 'Play-Button-light.png')
@@ -459,17 +486,38 @@ class Main_Window:
         open_image = Image.open(play_button_path)
         play_button_image = ctk.CTkImage(open_image)
 
-        game_title = game_name
-        epic_game_image = grab_epic_game_photo(self.api_key, game_title)
+        # Define cache dir
+        cache_dir = os.path.join(self.current_dir, 'Cache', 'EpicGames')
+        os.makedirs(cache_dir, exist_ok=True)
 
+        # Define the cache file path for current game
+        cache_file_path = os.path.join(cache_dir, f"{game_name.replace(' ', '_')}.png")
+
+        # Check if the image is already cached
+        if os.path.exists(cache_file_path):
+            print(f"[Epic Games] Loading cached image for game '{game_name}' found in '{cache_file_path}'")
+            epic_game_image = Image.open(cache_file_path)
+        else:
+            print(f"[Epic Games] Fetching image for {game_name} from API using {self.api_key} as key")
+            epic_game_image = grab_epic_game_photo(self.api_key, game_name) # Call the function to get the image from the API
         if epic_game_image == None:
-            epic_game_image = Image.open(os.path.join(self.current_dir, 'Icons', 'Placeholder_Image.jpg')) # Set the image to the placeholder since the API couldn't get the photo
-        else:    
-            # Load and process the image
-            game_image_resize = epic_game_image.resize((300, 450))
-            blurred_game_photo = add_blur_gradient(game_image_resize, 10, 0.2)  # Adjust blur effect and height ratio
-            rounded_blurred_image = add_rounded_corners(blurred_game_photo, 10)  # Adjust radius of photo here
+            # Use a placeholder image if API fails to fetch the image
+            epic_game_image = Image.open(os.path.join(self.current_dir, 'Icons', 'Placeholder_Image.png')) # Set the image to the placeholder since the API couldn't get the photo
+        elif not os.path.exists(cache_file_path):
+            epic_game_image.save(cache_file_path)
+            print(f"[Epic Games] Cached image for {game_name} at {cache_file_path}")
+
+        # Resize image
+        _epic_game_image = epic_game_image.resize((300, 450))
+
+        # Apply rounded corners and blur effect (if enabled)
+        if self.blur_enabled.get():
+            blurred_game_photo = add_blur_gradient(_epic_game_image, 10, 0.15)
+            rounded_blurred_image = add_rounded_corners(blurred_game_photo, 10)
             game_image = ImageTk.PhotoImage(rounded_blurred_image)
+        else:
+            rounded_image = add_rounded_corners(_epic_game_image, 10)
+            game_image = ImageTk.PhotoImage(rounded_image)
 
         # Create a CTkCanvas to overlay the button on the image
         if self.color.get() == 'dark':
@@ -487,16 +535,16 @@ class Main_Window:
             text="Play",
             image=play_button_image,
             font=("Ariel", 16, "bold"),
-            fg_color="transparent",
-            bg_color= '#059212',
-            text_color="white",
-            width=135,
+            fg_color="transparent",  # Match Steam button
+            bg_color="transparent",  # Match Steam button
+            text_color="white",  # Match Steam button
+            width=80,
             height=50,
-            hover_color="#06D001",
+            hover_color="#756e6d",  # Match Steam button hover color
             corner_radius=0,
             border_width=0,
             anchor="center",
-            command=lambda:launch_epic_game(game_path, game_name, launcher_path)
+            command=lambda: launch_epic_game(game_path, game_name, launcher_path)
         )
 
         # Set button padding
@@ -507,39 +555,34 @@ class Main_Window:
         # Place the button on the canvas with padding
         canvas.create_window(button_x, button_y, window=epic_play_button)
 
-
-
-
-
 # -----------------------------------------------------------------------------------------
     def create_steam_games_list(self):
-        # Array of Games
-        self.steam_games_frame = ctk.CTkFrame(self.scrollable_frame, 
-                                                  #fg_color = 'transparent',
-                                   )
-        # Old Pack Layout
-        # self.steam_games_frame.pack(padx=5,
-        #                  fill="both",
-        #                  expand=True
-        #                 )
+        # Destory any game frame (including placeholder frames) currently on the screen
+        self.destory_games()
 
-        # New Grid Layout
+        # Array of Steam Games Frame
+        self.steam_games_frame = ctk.CTkFrame(self.scrollable_frame)
         self.steam_games_frame.grid(row=2, column=1, sticky="nsew", padx=(15, 5))
-        
+
         # Array of Game names and App ids sperately taken from self.steam_games array
         game_names = []
         app_ids = []
-
-        self.load_config() # run function that returns dictionary of steam games ex: '{'Garrys Mod': '4000'}'
         
         # Sort the Dictionary by A-Z
-        # print(f"Load config returns Steam (UNSORTED): '{self.steam_games}'")
-        self.steam_games = OrderedDict(sorted(self.steam_games.items()))
-        print(f"Sorted Steam Games Dictionary: '{self.steam_games}'")
+        print("\n[Steam] Dictionary List:")
+        print(f"[Unsorted] Steam Games Dictionary (Name, AppID): '{self.steam_games}'")
+
+        print(f"Steam Games Dictionary's sort order is set to '{self.current_sort.get()}'")
+
+        # Sort the list of games in the correct order
+        if self.current_sort.get() == "A-Z":
+            self.steam_games = OrderedDict(sorted(self.steam_games.items())) # Sort the steam game list A-Z
+        elif self.current_sort.get() == "Z-A":
+            self.steam_games = OrderedDict(sorted(self.steam_games.items(), reverse=True)) # Sort the steam game list Z-A
+        elif self.current_sort.get() == "Recently Used":
+            self.steam_games = OrderedDict(sorted(self.steam_games.items())) # FOR NOW just sort it normally A-Z
         
-        # print(f"Load config returns Epic (UNSORTED): {self.epic_games}")
-        # self.epic_games = OrderedDict(sorted(self.epic_games.items()))
-        # print(f"Sorted Epic Games Dictionary: {self.epic_games}")
+        print(f"[Sorted] Steam Games Dictionary (Name, AppID): '{self.steam_games}'")
         
         # Process each config string
         for config_string in self.steam_games:
@@ -565,10 +608,11 @@ class Main_Window:
         
         # logo_600x900 = "_library_600x900.jpg" # last half of the jpg file that is the same
 
+        print("\n[Steam] Loading Images:")
         counter = 0
         for game_name, app_id in self.steam_games.items():
             
-            app_id_logo_path = get_cover_image(app_id) # Run Function to get the cover image either local or from API
+            app_id_logo_path = get_cover_image(app_id, game_name) # Run Function to get the cover image either local or from API
             # print(f"Calling Function 'Create Steam Button' with {app_id_logo_path} as logo and {game_name} as game")
             self.create_steam_game_button(app_id_logo_path, game_name, app_id, counter, num_columns) # Function call to create steam game button
             #self.steam_games_frame.grid_rowconfigure(counter, weight=1)  # Make rows expand evenly
@@ -585,41 +629,19 @@ class Main_Window:
 
 # -----------------------------------------------------------------------------------------
     def steam_game_placeholder_text(self):
+        # Set the correct text color
         if self.color.get() == 'dark':
-            # current_text_color = "#dce4ee"
             current_text_color = "#777777"
         elif self.color.get() == 'light':
             current_text_color = "#1a1a1a"
         
-        self.steam_game_frame = ctk.CTkFrame(self.scrollable_frame,
-                                        height=100
-                                        )
-        # self.steam_game_frame.pack(padx=5,
-        #                  fill="both",
-        #                  expand=True
-        #                 )
-        self.steam_game_frame.grid(
-            row=1, column=0,
-            padx=5, pady=5,
-            sticky="nsew"
-    )
-        
+        # Create the game frame inside the scrollable frame
+        self.steam_game_frame = ctk.CTkFrame(self.scrollable_frame, height=100)
+        self.steam_game_frame.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
 
-        placeholder_label = ctk.CTkLabel(self.steam_game_frame,
-                                         text="No Games Found",
-                                         text_color=current_text_color,
-                                         font=("Ariel", 20, "normal")
-                                        )
-        # placeholder_label.pack(side="top",
-        #                        pady=20,
-        #                        padx=(50,0),
-        #                        expand=True
-        #                        )
-        placeholder_label.grid(
-        row=1, column=0,
-        padx=(50, 0), pady=20,
-        sticky="n"
-        )
+        # Create the placeholder text label
+        placeholder_label = ctk.CTkLabel(self.steam_game_frame, text="No Games Found", text_color=current_text_color, font=("Ariel", 20, "normal"))
+        placeholder_label.grid(row=1, column=0, padx=(50, 0), pady=20, sticky="n")
 
         # let the label’s cell expand (so centering works)
         self.steam_game_frame.grid_rowconfigure(0, weight=1)
@@ -661,13 +683,6 @@ class Main_Window:
         canvas.create_image(0, 0, anchor='nw', image=game_image) # Add the image to the canvas
         canvas.grid(row=row, column=column, padx=10, pady=10)
 
-        # Add Game Name above the button
-        # steam_game_text = ctk.CTkLabel(
-        #     canvas,
-        #     text="Play",
-
-        # )
-
         # Add the play button on top of the image
         steam_play_button = ctk.CTkButton(
             canvas,
@@ -694,7 +709,6 @@ class Main_Window:
         # Place the button on the canvas with padding
         canvas.create_window(button_x, button_y, window=steam_play_button)
 
-
 # -----------------------------------------------------------------------------------------
     def Show_Settings_Menu(self): # This function should wipe all widgets on screen and then show the settings menu
         if (hasattr(self, "settings_frame") and self.settings_frame.winfo_exists()):
@@ -712,6 +726,7 @@ class Main_Window:
             self.Update_Steam = False
             self.Update_Epic = False
             self.Kill_All_Widgets()
+            self.load_config()
             self.create_dashboard()
         else:
             return None
@@ -742,7 +757,7 @@ class Main_Window:
 
         self.load_user_settings_prefrences() # Load UI for user settings preferences
         self.load_steam_settings() # Load UI for steam path settings
-        #self.load_epic_games_settings() # Load UI for epic path settings
+        self.load_epic_games_settings() # Load UI for epic path settings
         
         
         popup_hwnd = windll.user32.GetParent(self.settings_Window.winfo_id())
@@ -1077,7 +1092,6 @@ class Main_Window:
 
 # -----------------------------------------------------------------------------------------
     def Kill_All_Widgets(self):
-        print("Running Destory All Widgets Function...")
         # Loop through all widgets in current app and destroy
         counter = 0
         for widget in self.root.winfo_children():
@@ -1122,12 +1136,9 @@ class Main_Window:
 
     def calculate_scrollable_height(self):
         # Set the scrollable height of the window
-        # Now that the window is drawn, calculate the scrollable height
         window_height = self.root.winfo_height()
         self.scrollable_height = int(window_height)
-    
-        # Now you can use self.scrollable_height in the rest of your layout
-        print(f"Calculated scrollable height: {self.scrollable_height}")
+        #print(f"Calculated scrollable height to {self.scrollable_height}")
 
     # ------------------------------------------------------------------------------------------
     def load_blur_setting(self):
@@ -1157,6 +1168,58 @@ class Main_Window:
         else:
             print("Blur setting unchanged.")
         
+    # ------------------------------------------------------------------------------------------
+    def change_sort(self, x):
+        if x == self.current_sort.get():
+            print(f"[Sort] Already set to {self.current_sort.get()}")
+        elif x == "Z-A":
+            self.current_sort.set(x)
+            print(f"[Sort] Set to {self.current_sort.get()}. Reloading game order...")
+            self.refresh_sorting() # Reload the game frame in the new sorted order
+        elif x == "A-Z":
+            self.current_sort.set(x)
+            print(f"[Sort] Set to {self.current_sort.get()}. Reloading game order...")
+            self.refresh_sorting() # Reload the game frame in the new sorted order
+
+        elif x == "Recently Used":
+            self.current_sort.set(x)
+            print(f"[Sort] Set to {self.current_sort.get()}. Reloading game order...")
+            self.refresh_sorting() # Reload the game frame in the new sorted order
+            
+        else:
+            print("Passed value is not valid for current sorting structure.")
 
     # ------------------------------------------------------------------------------------------
-    
+
+    def refresh_sorting(self):
+        self.destory_games()
+
+        if self.destroyed_game_frame == "Steam":
+            self.create_steam_games_list()
+        elif self.destroyed_game_frame == "Epic":
+            self.create_epic_games_list()
+
+
+    # ------------------------------------------------------------------------------------------
+
+    def destory_games(self):
+         # Destroy Steam frame and placeholder if they exist
+        if hasattr(self, 'steam_games_frame') and self.steam_games_frame.winfo_exists():
+            self.steam_games_frame.destroy()
+            print("Steam Games Frame Destroyed!")
+            self.destroyed_game_frame = "Steam"
+        elif hasattr(self, 'steam_game_frame') and self.steam_game_frame.winfo_exists():
+            self.steam_game_frame.destroy()
+            print("Steam Games Placeholder Destroyed!")
+            self.destroyed_game_frame = "Steam"
+
+        # Destroy Epic Games frame or placeholder if it exists
+        if hasattr(self, 'epic_games_frame') and self.epic_games_frame.winfo_exists():
+            self.epic_games_frame.destroy()
+            print("Epic Games Frame Destroyed!")
+            self.destroyed_game_frame = "Epic"
+        elif hasattr(self, 'epic_game_frame') and self.epic_game_frame.winfo_exists():
+            self.epic_game_frame.destroy()
+            print("Epic Games Placeholder Destroyed!")
+            self.destroyed_game_frame = "Epic"
+

@@ -164,10 +164,10 @@ def get_steam_games(manifests_folder):
 def launch_steam_game(app_id, steam_path, name):
     command = [steam_path, "-applaunch", str(app_id)]
     print(f"Launching Game \"{name}\"...")
-    time.sleep(2) # Pauses for 2 seconds
-    print(f"Successfully Launched \"{name}\"")
     try:
-        subprocess.run(command)
+        subprocess.Popen(command)  # Use Popen instead of run for async execution
+        time.sleep(2)  # Pauses for 2 seconds
+        print(f"Successfully Launched \"{name}\"")
     except subprocess.CalledProcessError as e:
         messagebox.showerror("Launcher", f"Failed to launch game: {e}")
     except FileNotFoundError as fnf_error:
@@ -185,32 +185,48 @@ def get_epic_games(game_folder, launcher_executable):
                 data = json.load(file)
                 display_name = data.get("DisplayName", "")
                 install_location = data.get("InstallLocation", "")
-                launch_executable = data.get("LaunchExecutable", "")
-                if launch_executable == "FortniteGame/Binaries/Win64/FortniteLauncher.exe": # Change the fortnite executable because the one in the binary file requires you to launch through epic games launcher.
-                    launch_executable = "FortniteGame/Binaries/Win64/FortniteClient-Win64-Shipping_EAC_EOS.exe" # Change to the one that lets you do it without launching it via the epic games launcher.
-                executable_location = os.path.normpath(os.path.join(install_location, launch_executable))
-                # print(display_name, executable_location)
-                Epic_Games[display_name] = {
-                    "Executable": executable_location,
-                    "Launcher Executable": launcher_executable
-                }
+
+                # Search for an executable file in the install location
+                launch_executable = None
+                if os.path.exists(install_location):
+                    for root, dirs, files in os.walk(install_location):
+                        for file in files:
+                            if file.endswith(".exe"):
+                                launch_executable = os.path.join(root, file)
+                                break
+                        if launch_executable:
+                            break
+
+                # Handle Fortnite's special case
+                if display_name.lower() == "fortnite":
+                    launch_executable = os.path.normpath(
+                        os.path.join(install_location, "FortniteGame/Binaries/Win64/FortniteClient-Win64-Shipping_EAC_EOS.exe")
+                    )
+
+                if launch_executable:
+                    executable_location = os.path.normpath(launch_executable)
+                    Epic_Games[display_name] = {
+                        "Executable": executable_location,
+                        "Launcher Executable": launcher_executable
+                    }
+                else:
+                    print(f"No executable found for {display_name} in {install_location}")
     return Epic_Games
 #
 # ---------------------------------------------------------------------------------------------------------------------------------------
 # Function to launch the provided epic game given the parameters (the game's executable path, the game's name, and epic game's exe path).
 def launch_epic_game(executable_path, name, epic_games_launcher_executable):
     try:
-        subprocess.call(executable_path)
+        subprocess.Popen(executable_path)
         print(f"Launching Game \"{name}\"...")
         time.sleep(2) # Pauses for 2 seconds
         print(f"Successfully Launched \"{name}\"") # Print that is successfully launched.
-        #self.Exit()
     except subprocess.CalledProcessError as e:
         print (f"Failed to Launch Game, Launching Epic Games Store by default: \"{name}\"... Error: {e}") # Print the error statement in detail.
-        subprocess.call(epic_games_launcher_executable)
+        subprocess.Popen(epic_games_launcher_executable)
     except FileNotFoundError as fnf:
         print (f"Failed to Find Game, Make sure the game is installed. Opening Epic Games Store...")
-        subprocess.call(epic_games_launcher_executable)
+        subprocess.Popen(epic_games_launcher_executable)
 
 # ---------------------------------------------------------------------------------------------------------------------------------------
 # 
@@ -237,7 +253,7 @@ def grab_epic_game_photo(api_key, game_title):
 
     # Perform the search request
     print()
-    print(f"Attempting to get Image from {base_url}...")
+    print(f"Attempting to get Image from {base_url} with '{api_key}' as key...")
     response = requests.get(search_url, params=params, headers=headers)
     
     # Check the response
@@ -334,17 +350,16 @@ def add_rounded_corners(image, radius):
     return rounded_image
 
 # -------------------------------------------------------------------------------------------
-def get_cover_image(app_id):
+def get_cover_image(app_id, game_name):
     # Try to grab the cover image locally
     search_root = os.path.join(os.getenv("PROGRAMFILES(X86)"), "Steam", "appcache", "librarycache", app_id)
-
     for root, dirs, files in os.walk(search_root, topdown=True):
         # Limit the depth of the search to only two levels
         dirs[:] = [d for d in dirs if os.path.join(root, d).count(os.sep) - search_root.count(os.sep) <= 1]
 
         for file in files:
             if file == "library_600x900.jpg":
-                print("Local Image Found!")
+                print(f"[Steam] Used Local Image from '{game_name}' found in '{os.path.join(root, file)}'")
                 return os.path.join(root, file)
 
     # Fallback to CDN if no local image found
