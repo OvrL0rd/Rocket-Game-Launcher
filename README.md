@@ -8,7 +8,7 @@ Rocket Game Launcher is a simple easy to use GUI interface written out of the cu
 ### Usage
 This program's main dependency is the path you provide to it. The program will list what is in that folder you specifiy (given it is the correct file type). The folder location depends on your steam install location but for most systems it would be 'C:\Program Files (x86)\Steam\steamapps\'. The files there are '.acf' files which are the manifest files the program parses and lists your games. For other installations to a seperate drive you would have to know where that path is and locate those .acf files then input that path to the program. I have not tested this on linux so I can't say 100% that it works as intended.
 
-### Features
+### Features In the Works
 - [x] Simple GUI/Settings
 - [x] Dark/Light Mode
 - [x] Steam Support
