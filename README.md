@@ -1,6 +1,6 @@
 # ReadMe
 ## Rocket-Game-Launcher
-A GUI application written solely in python.
+A python GUI Launcher.
 
 ### Description
 Rocket Game Launcher is a game launcher written in python using custom tkinter. This project is simple at the moment and launches any steam/epic game when given the correct manifests path. It also has support for multiple drives/install locations as well (up to 2 total drives at this time). Currently this program only works for windows machines (unless you want to edit the config file to work with linux).
