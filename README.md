@@ -13,6 +13,9 @@ This program's main dependency is the path you provide to it. The program will l
 - [x] Dark/Light Mode
 - [x] Steam Support
 - [x] Epic Games Support
+- [ ] Searching
+
+### Future Features
 - [ ] Battle.NET Support
 - [ ] Xbox support
 - [ ] Linux support?
