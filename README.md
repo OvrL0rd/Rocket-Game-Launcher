@@ -25,5 +25,5 @@ This program depends on the path you provide it. At the moment there are 2 steam
 - [ ] Linux support?
 
 ### Credits & Resources
-- [icons8.com]("https://icons8.com)
+- [icons8]("https://icons8.com)
 - [CustomTkinter]("https://github.com/TomSchimansky/CustomTkinter")
