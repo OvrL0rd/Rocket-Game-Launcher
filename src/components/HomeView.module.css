@@ -1,0 +1,922 @@
+/* ── Root ──────────────────────────────────────────────────────────────────── */
+.root {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  background-image: var(--bg-gradient);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   HERO BANNER  (Steam / Xbox / GOG-style cinematic banner)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.heroBanner {
+  position: relative;
+  height: var(--hero-height, 500px);
+  flex-shrink: 0;
+  overflow: hidden;
+  background: var(--bg);
+  user-select: none;
+}
+
+/* ── Blurred ambient background (stacked, crossfade) ─────────────────────── */
+.heroBgs {
+  position: absolute;
+  inset: 0;
+}
+
+.heroBgImg {
+  position: absolute;
+  /* Overflow to hide blur edge artifacts */
+  inset: -40px;
+  width: calc(100% + 80px);
+  height: calc(100% + 80px);
+  object-fit: cover;
+  object-position: center top;
+  filter: blur(55px) brightness(0.18) saturate(1.6);
+  opacity: 0;
+  transition: opacity 550ms ease;
+  will-change: opacity;
+}
+
+.heroBgImgActive {
+  opacity: 1;
+}
+
+/* ── Gradient overlays ───────────────────────────────────────────────────── */
+
+/* Left-to-right: content area stays dark and readable */
+.heroOverlayLeft {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    rgb(var(--bg-r), var(--bg-g), var(--bg-b))           0%,
+    rgba(var(--bg-r), var(--bg-g), var(--bg-b), 0.88)    30%,
+    rgba(var(--bg-r), var(--bg-g), var(--bg-b), 0.42)    55%,
+    rgba(var(--bg-r), var(--bg-g), var(--bg-b), 0.06)    72%,
+    transparent                                            85%
+  );
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Bottom: fades into the exact page background color — no hard edge */
+.heroOverlayBottom {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgb(var(--bg-r), var(--bg-g), var(--bg-b))           0%,
+    rgba(var(--bg-r), var(--bg-g), var(--bg-b), 0.75)    10%,
+    rgba(var(--bg-r), var(--bg-g), var(--bg-b), 0.18)    30%,
+    transparent                                            52%
+  );
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* ── Cover art panel (right side) ────────────────────────────────────────── */
+
+.heroCovers {
+  position: absolute;
+  right: var(--hero-cover-right, 60px);
+  top: 50%;
+  transform: translateY(-50%);
+  width: var(--hero-cover-w, 200px);
+  aspect-ratio: 2 / 3;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  z-index: 2;
+  box-shadow:
+    0 32px 80px rgba(0, 0, 0, 0.75),
+    0 8px 24px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.07);
+}
+
+.heroCoverImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  opacity: 0;
+  transition: opacity 420ms ease;
+  will-change: opacity;
+}
+
+.heroCoverImgActive {
+  opacity: 1;
+}
+
+/* Subtle inner ring on cover */
+.heroCoverRing {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-lg);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Content layer (sits above all backgrounds) ──────────────────────────── */
+
+.heroContent {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  /* Right padding: leave room for the cover art + gap */
+  padding: 0
+    calc(var(--hero-cover-w, 200px) + var(--hero-cover-right, 60px) + 48px)
+    28px
+    var(--home-padding-h, 48px);
+}
+
+/* ── Game info (platform badge → title → meta) ───────────────────────────── */
+
+.heroInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 22px;
+}
+
+.heroPlatformBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-heading);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  padding: 3px 9px;
+  border-radius: 4px;
+  width: fit-content;
+}
+
+.heroPlatformBadge[data-platform="steam"] {
+  background: rgba(102, 192, 244, 0.12);
+  border: 1px solid rgba(102, 192, 244, 0.35);
+  color: #66c0f4;
+}
+
+.heroPlatformBadge[data-platform="epic"] {
+  background: rgba(176, 196, 216, 0.12);
+  border: 1px solid rgba(176, 196, 216, 0.35);
+  color: #b0c4d8;
+}
+
+.heroTitle {
+  font-family: var(--font-heading);
+  font-size: clamp(22px, 3.2vw, 40px);
+  font-weight: 400;
+  color: #fff;
+  margin: 0;
+  line-height: 1.06;
+  letter-spacing: 0.015em;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.6);
+  /* Clamp to 2 lines max */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.heroMeta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.48);
+  margin: 0;
+}
+
+/* ── Bottom row: thumbnails + action buttons ─────────────────────────────── */
+
+.heroBottom {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+/* ── Thumbnail strip (Steam-style) ───────────────────────────────────────── */
+
+.heroThumbs {
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.heroThumb {
+  position: relative;
+  flex-shrink: 0;
+  width: 40px;
+  height: 56px;
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  opacity: 0.5;
+  transition:
+    opacity 200ms var(--ease-out),
+    border-color 200ms var(--ease-out),
+    transform 200ms var(--ease-out);
+  background: #07071a;
+  padding: 0;
+}
+
+.heroThumb:hover {
+  opacity: 0.82;
+  transform: translateY(-3px);
+}
+
+.heroThumbActive {
+  opacity: 1;
+  border-color: rgba(255, 255, 255, 0.55);
+  transform: translateY(-3px);
+}
+
+.heroThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+}
+
+/* Animated fill-bar at the bottom of the active thumbnail */
+.heroThumbProgress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2.5px;
+  background: var(--accent);
+  box-shadow: 0 0 6px rgba(var(--hc-r, 124), var(--hc-g, 58), var(--hc-b, 237), 0.7);
+  animation: thumbFill linear forwards;
+  border-radius: 0 0 0 0;
+}
+
+@keyframes thumbFill {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
+
+/* ── Action buttons ──────────────────────────────────────────────────────── */
+
+.heroActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.heroPlayBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 22px;
+  background: rgba(var(--hc-r, 124), var(--hc-g, 58), var(--hc-b, 237), 0.85);
+  border: 1px solid rgba(var(--hc-r, 124), var(--hc-g, 58), var(--hc-b, 237), 0.95);
+  border-radius: var(--radius);
+  font-family: var(--font-heading);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 20px rgba(var(--hc-r, 124), var(--hc-g, 58), var(--hc-b, 237), 0.4);
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    transform   var(--duration-fast) var(--ease-out),
+    box-shadow  var(--duration-fast) var(--ease-out);
+}
+
+.heroPlayBtn:hover {
+  background: rgba(var(--hc-r, 124), var(--hc-g, 58), var(--hc-b, 237), 1);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 28px rgba(var(--hc-r, 124), var(--hc-g, 58), var(--hc-b, 237), 0.55);
+}
+
+.heroPlayBtn:active { transform: translateY(0); }
+
+.heroPlayBtnLoading {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.heroDetailsBtn {
+  display: inline-flex;
+  align-items: center;
+  height: 42px;
+  padding: 0 18px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--radius);
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.65);
+  cursor: pointer;
+  white-space: nowrap;
+  backdrop-filter: blur(8px);
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    color      var(--duration-fast) var(--ease-out);
+}
+
+.heroDetailsBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+/* ── Prev / Next arrows (appear on hover) ────────────────────────────────── */
+
+.heroArrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 4;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity     180ms var(--ease-out),
+    background  180ms var(--ease-out),
+    color       180ms var(--ease-out),
+    transform   180ms var(--ease-out);
+  backdrop-filter: blur(12px);
+}
+
+.heroBanner:hover .heroArrow {
+  opacity: 1;
+}
+
+.heroArrow:hover {
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+}
+
+.heroArrowLeft  { left: 14px; }
+.heroArrowRight { right: 14px; }
+
+/* ── Empty state ─────────────────────────────────────────────────────────── */
+
+.heroEmpty {
+  height: var(--hero-height, 500px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
+.heroEmptyInner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  padding: 40px;
+}
+
+.heroEmptyTitle {
+  font-family: var(--font-heading);
+  font-size: 32px;
+  color: var(--text);
+  margin: 0;
+}
+
+.heroEmptyHint {
+  font-size: 14px;
+  color: var(--text-muted);
+  max-width: 380px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.heroEmptyBtn {
+  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  height: 42px;
+  padding: 0 28px;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius);
+  font-family: var(--font-heading);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: #fff;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out);
+}
+
+.heroEmptyBtn:hover { background: var(--accent-hover); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SECTIONS  (rows below the hero)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.sections {
+  padding: 40px var(--home-padding-h, 48px) 72px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-gap, 40px);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-header-mb, 16px);
+}
+
+/* ── Section header ──────────────────────────────────────────────────────── */
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sectionIcon {
+  color: var(--accent);
+  opacity: 0.8;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.sectionLabel {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  letter-spacing: 0.07em;
+  color: var(--text);
+  flex: 1;
+}
+
+.seeAllBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--accent);
+  opacity: 0.55;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+.seeAllBtn:hover { opacity: 1; }
+
+/* ── Carousel ────────────────────────────────────────────────────────────── */
+
+.carouselWrap {
+  position: relative;
+}
+
+.carouselWrap::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 12px;
+  width: 72px;
+  background: linear-gradient(to left, var(--bg) 20%, transparent 100%);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.carousel {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding-bottom: 12px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.carousel::-webkit-scrollbar { display: none; }
+
+/* ── Card entrance animation ─────────────────────────────────────────────── */
+
+@keyframes cardEntrance {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Game card ───────────────────────────────────────────────────────────── */
+
+.card {
+  flex-shrink: 0;
+  cursor: pointer;
+  border-radius: var(--radius);
+  animation: cardEntrance 280ms var(--ease-out) both;
+  animation-delay: calc(var(--card-index, 0) * 35ms);
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.card:hover { transform: translateY(-5px); }
+
+.card:active {
+  transform: scale(0.97) translateY(-2px);
+  transition-duration: 80ms;
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--radius);
+}
+
+.cardCompact {
+  flex-shrink: unset;
+  width: 100%;
+}
+
+/* ── Card image wrap ─────────────────────────────────────────────────────── */
+
+.cardImgWrap {
+  position: relative;
+  width: var(--home-card-w, 140px);
+  height: var(--home-card-h, 210px);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  transition: box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.card:hover .cardImgWrap { box-shadow: var(--shadow-card-hover); }
+
+.cardCompact .cardImgWrap {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 2 / 3;
+}
+
+.cardImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform var(--duration) var(--ease-out);
+}
+
+.card:hover .cardImg { transform: scale(1.03); }
+
+/* ── Top-corner badges ───────────────────────────────────────────────────── */
+
+.cardFavBadge {
+  position: absolute;
+  top: 7px;
+  left: 7px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #F5C518;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+  z-index: 4;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.cardPlatformBadge {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+  z-index: 4;
+  opacity: 0.75;
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+.card:hover .cardPlatformBadge { opacity: 1; }
+
+.cardPlatformBadge[data-platform="steam"] {
+  background: rgba(102, 192, 244, 0.16);
+  border: 1px solid rgba(102, 192, 244, 0.4);
+  color: #66c0f4;
+}
+
+.cardPlatformBadge[data-platform="epic"] {
+  background: rgba(176, 196, 216, 0.14);
+  border: 1px solid rgba(176, 196, 216, 0.35);
+  color: #b0c4d8;
+}
+
+/* ── Hover overlay (dark backdrop) ──────────────────────────────────────── */
+
+.cardOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  transition: background var(--duration-fast) var(--ease-out);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.cardImgWrap:hover .cardOverlay { background: rgba(0, 0, 0, 0.42); }
+
+/* ── Play button — matches library style (accent-2 rounded square) ────────── */
+
+.cardPlayBtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--accent-2);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 7px 12px;
+  font-family: var(--font-heading);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  pointer-events: auto;
+  opacity: 0;
+  transform: translateY(6px);
+  transition:
+    opacity    var(--duration) var(--ease-out),
+    transform  var(--duration) var(--ease-out),
+    background var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+  box-shadow: 0 0 0 transparent;
+}
+
+.cardImgWrap:hover .cardPlayBtn {
+  opacity: 1;
+  transform: translateY(0);
+  box-shadow: 0 0 16px var(--accent-2-glow);
+}
+
+.cardPlayBtn:hover { background: var(--accent-2-hover); }
+.cardPlayBtn:active { transform: scale(0.95); }
+
+.cardPlayBtnLaunching {
+  opacity: 0.7 !important;
+  cursor: not-allowed;
+}
+
+/* ── Bottom info overlay (always visible on the card image) ──────────────── */
+
+.cardBottomInfo {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 40px 9px 9px;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.88) 0%,
+    rgba(0, 0, 0, 0.55) 50%,
+    transparent 100%
+  );
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.cardNameGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cardName {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.92);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.02em;
+}
+
+.cardPlaytime {
+  font-family: var(--font-body);
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.46);
+  letter-spacing: 0.02em;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SPOTLIGHT  (large featured card + 2×2 grid)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.spotlight {
+  display: grid;
+  grid-template-columns: calc(var(--home-card-w, 140px) * 1.85) 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.spotlightCard {
+  position: relative;
+  width: calc(var(--home-card-w, 140px) * 1.85);
+  height: calc(var(--home-card-h, 210px) * 1.6);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.5),
+    0 0 32px rgba(var(--sc-r, 80), var(--sc-g, 80), var(--sc-b, 200), 0.25);
+  transition:
+    transform   var(--duration-fast) var(--ease-out),
+    box-shadow  var(--duration-fast) var(--ease-out);
+  flex-shrink: 0;
+}
+
+.spotlightCard:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    var(--shadow-card-hover),
+    0 0 40px rgba(var(--sc-r, 80), var(--sc-g, 80), var(--sc-b, 200), 0.3);
+}
+
+.spotlightCard:active {
+  transform: scale(0.98);
+  transition-duration: 80ms;
+}
+
+.spotlightCard:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.spotlightImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform var(--duration) var(--ease-out);
+}
+
+.spotlightCard:hover .spotlightImg { transform: scale(1.03); }
+
+.spotlightOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.88) 0%,
+    rgba(0, 0, 0, 0.2)  45%,
+    transparent 65%
+  );
+  z-index: 1;
+}
+
+/* ── Centered play overlay ───────────────────────────────────────────────── */
+
+.spotlightPlayOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0);
+  transition: background var(--duration-fast) var(--ease-out);
+  z-index: 2;
+}
+
+.spotlightCard:hover .spotlightPlayOverlay { background: rgba(0, 0, 0, 0.3); }
+
+.spotlightPlayBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent-2);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 9px 16px;
+  font-family: var(--font-heading);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(8px) scale(0.95);
+  transition:
+    opacity    var(--duration) var(--ease-out),
+    transform  var(--duration) var(--ease-out),
+    background var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+  box-shadow: 0 0 0 transparent;
+}
+
+.spotlightCard:hover .spotlightPlayBtn {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  box-shadow: 0 0 24px var(--accent-2-glow);
+}
+
+.spotlightPlayBtn:hover { background: var(--accent-2-hover); }
+.spotlightPlayBtn:active { transform: scale(0.96); }
+
+.spotlightPlayBtnLaunching {
+  opacity: 0.7 !important;
+  cursor: not-allowed;
+}
+
+/* ── Bottom info ─────────────────────────────────────────────────────────── */
+
+.spotlightContent {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.spotlightTitle {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  color: #fff;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spotlightMeta {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: var(--font-body);
+}
+
+/* ── 2×2 grid ────────────────────────────────────────────────────────────── */
+
+.spotlightGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  align-content: start;
+  max-height: calc(var(--home-card-h, 210px) * 1.6);
+  overflow: hidden;
+}
+
+.spotlightGrid .card {
+  height: calc((var(--home-card-h, 210px) * 1.6 - 10px) / 2);
+  transform-origin: center;
+}
+
+.spotlightGrid .cardImgWrap {
+  height: 100%;
+  width: 100%;
+}
+
+/* ── Spinner ─────────────────────────────────────────────────────────────── */
+
+.spinner {
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

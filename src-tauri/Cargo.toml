@@ -1,0 +1,27 @@
+[package]
+name = "rocket-game-launcher"
+version = "2.0.0"
+description = "Rocket Game Launcher"
+authors = []
+edition = "2021"
+
+[lib]
+name = "rocket_game_launcher_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "rocket-game-launcher"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-shell = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+portpicker = "0.1"

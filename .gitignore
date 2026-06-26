@@ -1,0 +1,22 @@
+CLAUDE.md
+
+# Node
+node_modules/
+dist/
+
+# Rust / Tauri
+src-tauri/target/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Env
+.env
+
+# OS
+.DS_Store
+Thumbs.db

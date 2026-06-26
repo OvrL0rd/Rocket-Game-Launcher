@@ -1,21 +1,83 @@
-# ReadMe
-## Rocket-Game-Launcher
-A GUI application written in python.
+# Rocket Game Launcher
 
-### Description
-Rocket Game Launcher is a simple easy to use GUI interface written with customtkiner python. This project is very simple at the moment and launches any steam game when given the correct appmanifests file path. It also has support for multiple drives/install locations as well.
+A cross-platform game launcher with a React frontend, Python backend, and Tauri shell.
 
-### Usage
-This program's main dependency is the path you provide to it (currently it defaults to steam's default path). The program will list what is in that folder you specifiy (given it is the correct file type). The folder location depends on your steam install location but for most systems it would be 'C:\Program Files (x86)\Steam\steamapps\'. The files there are '.acf' files which are the manifest files the program parses and lists your games. For other installations to a seperate drive you would have to know where that path is and locate those .acf files then input that path to the program. I have not tested this on linux so I can't say 100% that it works as intended.
+## Stack
 
-### Features
-- [x] Simple GUI/Settings
-- [x] Dark/Light Mode
-- [x] Steam Support
-- [ ] Epic Games Support
-- [ ] Heroic Launcher Support
-- [ ] Linux support
+- **Tauri 2** — native window, file dialogs, app packaging
+- **React + TypeScript + Vite** — frontend UI
+- **FastAPI (Python)** — backend; runs as a local sidecar process on startup
 
-### Credits & Resources
-- [icons8.com]("https://icons8.com)
-- [CustomTkinter]("https://github.com/TomSchimansky/CustomTkinter")
+## Requirements
+
+- [Node.js](https://nodejs.org/) 18+
+- [Rust](https://rustup.rs/) (stable)
+- Python 3.11+
+- [Tauri prerequisites](https://tauri.app/start/prerequisites/) for your OS (WebKit on Linux, nothing extra on Windows/macOS)
+
+## Getting started
+
+```bash
+# Install all dependencies
+make install
+
+# Start the app (backend + Tauri dev window)
+make up
+```
+
+## Dev commands
+
+| Command | Description |
+|---|---|
+| `make up` | Start backend + Tauri dev window. Ctrl-C stops both. |
+| `make down` | Kill background backend process. |
+| `make backend` | Start Python backend only (port 8743). |
+| `make frontend` | Start Vite dev server only (browser, no Tauri window). |
+| `make tauri` | Start Tauri window only (assumes backend is running). |
+| `make build` | Build release bundle. |
+| `make check` | TypeScript type-check + cargo check. |
+| `make lint` | ruff (Python) + eslint (TypeScript). |
+| `make test` | pytest on `backend/tests/`. |
+| `make clean` | Remove build artifacts and caches. |
+
+## Configuration
+
+Paths and executables are stored in `Config/config.ini` and can be changed from the in-app Settings menu.
+
+```ini
+[Steam]
+path1 = /path/to/steamapps        # Linux default: ~/.steam/steam/steamapps
+path2 =                            # Optional second drive
+executable = /path/to/steam
+
+[Epic Games]
+path1 =                            # Path to .item manifest folder
+executable =                       # Path to EpicGamesLauncher
+```
+
+## Features
+
+- [x] Steam game library (reads `.acf` manifests)
+- [x] Game artwork from Steam CDN (local cache preferred)
+- [x] Dark / light mode (follows system theme on startup)
+- [x] Settings UI with native file browser
+- [x] Linux + Windows support
+- [ ] Epic Games support
+- [ ] Heroic Launcher support
+- [ ] System tray
+
+## Project structure
+
+```
+src/               React frontend
+src-tauri/         Tauri (Rust) shell
+backend/           FastAPI Python backend
+Config/            config.ini
+Icons/             App icons and assets
+```
+
+## Credits
+
+- [icons8.com](https://icons8.com)
+- [Tauri](https://tauri.app)
+- [CustomTkinter](https://github.com/TomSchimansky/CustomTkinter) (v1)

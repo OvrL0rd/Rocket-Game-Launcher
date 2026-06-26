@@ -1,0 +1,153 @@
+@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;400;500;600;700&family=Russo+One&display=swap');
+
+/* ─── Design Tokens ─────────────────────────────────────────────────────────── */
+:root {
+  /* Dark (default) */
+  --bg:              #0F0F23;
+  --bg-r: 15; --bg-g: 15; --bg-b: 35;
+  --bg-gradient:     linear-gradient(160deg, #0F0F23 0%, #131329 60%, #0a0a1e 100%);
+  --surface:         #1A1A35;
+  --surface-raised:  #22223F;
+  --surface-hover:   #2a2a50;
+  --border:          rgba(124, 58, 237, 0.25);
+  --border-hover:    rgba(124, 58, 237, 0.6);
+  --text:            #E2E8F0;
+  --text-muted:      #6B7280;
+  --text-dim:        #4B5563;
+
+  --accent:          #7C3AED;
+  --accent-hover:    #8B5CF6;
+  --accent-glow:     rgba(124, 58, 237, 0.35);
+  --accent-2:        #F43F5E;
+  --accent-2-hover:  #FB5372;
+  --accent-2-glow:   rgba(244, 63, 94, 0.35);
+
+  --card-bg:         rgba(26, 26, 53, 0.8);
+  --modal-backdrop:  rgba(5, 5, 15, 0.75);
+  --glass-bg:        rgba(22, 22, 45, 0.7);
+  --glass-border:    rgba(124, 58, 237, 0.2);
+
+  --radius-sm:       6px;
+  --radius:          10px;
+  --radius-lg:       16px;
+  --radius-xl:       24px;
+
+  --ease-out:        cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in:         cubic-bezier(0.4, 0, 1, 1);
+  --duration-fast:   150ms;
+  --duration:        220ms;
+  --duration-slow:   350ms;
+
+  --font-heading:    'Russo One', system-ui, sans-serif;
+  --font-body:       'Chakra Petch', system-ui, sans-serif;
+
+  --card-min-width:  190px;
+
+  --shadow-card:     0 4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-card-hover: 0 8px 40px rgba(124, 58, 237, 0.25), 0 0 0 1px rgba(124, 58, 237, 0.4);
+  --shadow-modal:    0 24px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(124, 58, 237, 0.15);
+}
+
+[data-theme="light"] {
+  --bg:              #F0F0F8;
+  --bg-r: 240; --bg-g: 240; --bg-b: 248;
+  --bg-gradient:     linear-gradient(160deg, #F0F0F8 0%, #EAEAF5 60%, #E5E5F5 100%);
+  --surface:         #FFFFFF;
+  --surface-raised:  #F4F4FC;
+  --surface-hover:   #EEEEF8;
+  --border:          rgba(124, 58, 237, 0.2);
+  --border-hover:    rgba(124, 58, 237, 0.5);
+  --text:            #0F0F23;
+  --text-muted:      #6B7280;
+  --text-dim:        #9CA3AF;
+
+  --accent-glow:     rgba(124, 58, 237, 0.2);
+  --accent-2-glow:   rgba(244, 63, 94, 0.2);
+
+  --card-bg:         rgba(255, 255, 255, 0.9);
+  --modal-backdrop:  rgba(15, 15, 35, 0.5);
+  --glass-bg:        rgba(255, 255, 255, 0.8);
+  --glass-border:    rgba(124, 58, 237, 0.15);
+
+  --shadow-card:     0 4px 16px rgba(15, 15, 35, 0.1);
+  --shadow-card-hover: 0 8px 32px rgba(124, 58, 237, 0.2), 0 0 0 1px rgba(124, 58, 237, 0.3);
+  --shadow-modal:    0 24px 64px rgba(15, 15, 35, 0.2), 0 0 0 1px rgba(124, 58, 237, 0.1);
+}
+
+/* ─── Global density scales ──────────────────────────────────────────────────── */
+:root,
+html[data-density="default"] {
+  --hero-height:       500px;
+  --hero-cover-w:      200px;
+  --hero-cover-right:  60px;
+  --home-card-w:       140px;
+  --home-card-h:       210px;
+  --section-gap:       40px;
+  --section-header-mb: 16px;
+  --home-padding-h:    48px;
+}
+
+html[data-density="compact"] {
+  --hero-height:       380px;
+  --hero-cover-w:      155px;
+  --hero-cover-right:  40px;
+  --home-card-w:       120px;
+  --home-card-h:       180px;
+  --section-gap:       28px;
+  --section-header-mb: 12px;
+  --home-padding-h:    32px;
+}
+
+html[data-density="cozy"] {
+  --hero-height:       620px;
+  --hero-cover-w:      255px;
+  --hero-cover-right:  80px;
+  --home-card-w:       165px;
+  --home-card-h:       248px;
+  --section-gap:       52px;
+  --section-header-mb: 20px;
+  --home-padding-h:    64px;
+}
+
+/* ─── Reset ─────────────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  background-image: var(--bg-gradient);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Scrollbars ─────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* ─── Focus ──────────────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ─── Reduced motion ─────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
